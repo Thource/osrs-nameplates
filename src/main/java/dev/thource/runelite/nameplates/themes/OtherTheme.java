@@ -14,15 +14,15 @@ public class OtherTheme extends BaseTheme {
   @Override
   protected void drawBasePlate(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-      if (nameplate.getMaxHealth() <= 0) {
-          return;
-      }
+    if (nameplate.getMaxHealth() <= 0) {
+      return;
+    }
 
-      //        graphics.setColor(Color.RED);
-      //        graphics.fillRect(0, 0, width, height);
+    //        graphics.setColor(Color.RED);
+    //        graphics.fillRect(0, 0, width, height);
 
-      graphics.setColor(new Color(0.1f, 0.1f, 0.1f));
-      graphics.fillRect(0, getTitleHeight(scale), width, getPlateHeight(graphics, scale, nameplate));
+    graphics.setColor(new Color(0.1f, 0.1f, 0.1f));
+    graphics.fillRect(0, getTitleHeight(scale), width, getPlateHeight(graphics, scale, nameplate));
   }
 
   private static int getTitleHeight(float scale) {
@@ -37,11 +37,12 @@ public class OtherTheme extends BaseTheme {
   protected void drawOverlay(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
-      graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+      graphics.setFont(
+          FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
 
       int textLineY =
-              (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
+          (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
       graphics.setColor(Color.WHITE);
       graphics.drawString(nameplate.getName(), 0, textLineY);
 
@@ -114,7 +115,8 @@ public class OtherTheme extends BaseTheme {
   @Override
   protected int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
-      graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+      graphics.setFont(
+          FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
 
       return (int) fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight();
@@ -126,7 +128,8 @@ public class OtherTheme extends BaseTheme {
   @Override
   protected int getWidth(Graphics2D graphics, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
-      graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+      graphics.setFont(
+          FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
 
       return (int) fontMetrics.getStringBounds(nameplate.getName(), graphics).getWidth();

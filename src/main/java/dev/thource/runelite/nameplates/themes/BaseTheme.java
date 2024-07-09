@@ -35,7 +35,7 @@ public abstract class BaseTheme {
     Graphics2D plateGraphics = plate.createGraphics();
     drawBasePlate(plateGraphics, width, height, scale, nameplate);
     drawOverlay(plateGraphics, width, height, scale, nameplate);
-//    drawDebugData(graphics, width, height, scale, nameplate, anchor, actor);
+    //    drawDebugData(graphics, width, height, scale, nameplate, anchor, actor);
 
     //        Composite oldComposite = graphics.getComposite();
     //        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));

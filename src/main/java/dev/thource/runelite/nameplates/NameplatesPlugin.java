@@ -219,6 +219,11 @@ public class NameplatesPlugin extends Plugin {
       return client.getBoostedSkillLevel(Skill.HITPOINTS);
     }
 
+    if (actor instanceof NPC
+        && ((NPC) actor).getId() == client.getVarpValue(VarPlayer.HP_HUD_NPC_ID)) {
+      return client.getVarbitValue(Varbits.BOSS_HEALTH_CURRENT);
+    }
+
     if (actor.getHealthScale() == -1) {
       NpcHpCacheEntry cacheEntry = getHpCacheEntryForActor(actor);
       if (cacheEntry != null) {
