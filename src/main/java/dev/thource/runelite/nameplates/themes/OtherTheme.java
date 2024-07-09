@@ -37,6 +37,10 @@ public class OtherTheme extends BaseTheme {
   protected void drawOverlay(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
+      if (nameplate.getName() == null || nameplate.getName().isEmpty() || nameplate.getName().equals("null")) {
+        return;
+      }
+
       graphics.setFont(
           FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -65,8 +69,10 @@ public class OtherTheme extends BaseTheme {
 
     int textLineY =
         (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
-    graphics.setColor(Color.WHITE);
-    graphics.drawString(nameplate.getName(), 2, textLineY);
+    if (nameplate.getName() != null && !nameplate.getName().isEmpty() && !nameplate.getName().equals("null")) {
+      graphics.setColor(Color.WHITE);
+      graphics.drawString(nameplate.getName(), 2, textLineY);
+    }
 
     if (nameplate.getCombatLevel() > 0) {
       String combatLevelString = String.valueOf(nameplate.getCombatLevel());

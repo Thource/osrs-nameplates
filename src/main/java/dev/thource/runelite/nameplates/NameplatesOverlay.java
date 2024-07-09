@@ -45,7 +45,7 @@ public class NameplatesOverlay extends Overlay {
         .forEach(
             actor -> {
               Point point =
-                  actor.getCanvasTextLocation(graphics, "", (int) (actor.getModelHeight() * 1.4f));
+                  actor.getCanvasTextLocation(graphics, " ", (int) (actor.getLogicalHeight() * 1.4f));
               if (point == null) {
                 return;
               }
