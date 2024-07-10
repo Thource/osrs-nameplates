@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @RequiredArgsConstructor
 @Getter
-public class NpcHpCacheEntry {
+public class HpCacheEntry {
   private final int npcIndex;
   @Setter private int healthScale;
   @Setter private int hp;

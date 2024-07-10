@@ -2,28 +2,31 @@ package dev.thource.runelite.nameplates;
 
 import dev.thource.runelite.nameplates.themes.BaseTheme;
 import dev.thource.runelite.nameplates.themes.Themes;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.util.Comparator;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import net.runelite.api.*;
+import net.runelite.api.Actor;
+import net.runelite.api.Client;
+import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.Point;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.client.game.NPCManager;
-import net.runelite.client.ui.overlay.*;
+import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayPosition;
 
 public class NameplatesOverlay extends Overlay {
   @Inject private Client client;
   @Inject private NameplatesPlugin plugin;
-  @Inject private NameplatesConfig config;
-  @Inject private NPCManager npcManager;
   private long lastRender;
 
   @Inject
   NameplatesOverlay() {
     setPosition(OverlayPosition.DYNAMIC);
     setLayer(OverlayLayer.ABOVE_SCENE);
-    setPriority(OverlayPriority.MED);
+    setPriority(PRIORITY_MED);
 
     lastRender = System.currentTimeMillis();
   }
@@ -45,7 +48,8 @@ public class NameplatesOverlay extends Overlay {
         .forEach(
             actor -> {
               Point point =
-                  actor.getCanvasTextLocation(graphics, " ", (int) (actor.getLogicalHeight() * 1.4f));
+                  actor.getCanvasTextLocation(
+                      graphics, " ", (int) (actor.getLogicalHeight() * 1.4f));
               if (point == null) {
                 return;
               }

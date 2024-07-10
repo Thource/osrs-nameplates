@@ -1,7 +1,9 @@
 package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import net.runelite.api.Actor;
 import net.runelite.api.Point;
@@ -37,7 +39,9 @@ public class OtherTheme extends BaseTheme {
   protected void drawOverlay(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
-      if (nameplate.getName() == null || nameplate.getName().isEmpty() || nameplate.getName().equals("null")) {
+      if (nameplate.getName() == null
+          || nameplate.getName().isEmpty()
+          || nameplate.getName().equals("null")) {
         return;
       }
 
@@ -69,7 +73,9 @@ public class OtherTheme extends BaseTheme {
 
     int textLineY =
         (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
-    if (nameplate.getName() != null && !nameplate.getName().isEmpty() && !nameplate.getName().equals("null")) {
+    if (nameplate.getName() != null
+        && !nameplate.getName().isEmpty()
+        && !nameplate.getName().equals("null")) {
       graphics.setColor(Color.WHITE);
       graphics.drawString(nameplate.getName(), 2, textLineY);
     }

@@ -1,7 +1,8 @@
 package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import net.runelite.api.Actor;
 import net.runelite.api.Point;
 import net.runelite.api.SpriteID;

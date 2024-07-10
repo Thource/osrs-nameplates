@@ -3,7 +3,11 @@ package dev.thource.runelite.nameplates;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
-import net.runelite.api.*;
+import net.runelite.api.Actor;
+import net.runelite.api.NPC;
+import net.runelite.api.NPCComposition;
+import net.runelite.api.ParamID;
+import net.runelite.api.Skill;
 import net.runelite.client.hiscore.HiscoreSkill;
 import net.runelite.client.util.Text;
 
@@ -64,7 +68,7 @@ public class Nameplate {
                   nameplate.currentHealth = hp;
                   hpAnimationData.startAnimation(hp, hp, 0);
 
-                  NpcHpCacheEntry cacheEntry = plugin.getHpCacheEntryForActor(actor);
+                  HpCacheEntry cacheEntry = plugin.getHpCacheEntryForActor(actor);
                   if (cacheEntry != null) {
                     cacheEntry.setHp(hp);
                   }

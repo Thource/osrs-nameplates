@@ -9,8 +9,26 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
-import net.runelite.api.events.*;
+import net.runelite.api.Actor;
+import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.IndexedObjectSet;
+import net.runelite.api.NPC;
+import net.runelite.api.Player;
+import net.runelite.api.Skill;
+import net.runelite.api.SpriteID;
+import net.runelite.api.SpritePixels;
+import net.runelite.api.VarPlayer;
+import net.runelite.api.Varbits;
+import net.runelite.api.WorldView;
+import net.runelite.api.events.ActorDeath;
+import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.HitsplatApplied;
+import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.NpcSpawned;
+import net.runelite.api.events.PlayerDespawned;
+import net.runelite.api.events.PlayerSpawned;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -38,10 +56,8 @@ public class NameplatesPlugin extends Plugin {
   @Getter @Inject private NPCManager npcManager;
   @Getter @Inject private HiscoreClient hiscoreClient;
 
-  @Getter private final HashMap<Integer, NpcHpCacheEntry> playerHpCache = new HashMap<>();
-  @Getter private final HashMap<Integer, NpcHpCacheEntry> npcHpCache = new HashMap<>();
-  @Getter private final HashMap<Integer, Nameplate> playerNameplates = new HashMap<>();
-  @Getter private final HashMap<Integer, Nameplate> npcNameplates = new HashMap<>();
+  @Getter private final HashMap<Integer, HpCacheEntry> hpCache = new HashMap<>();
+  @Getter private final HashMap<Integer, Nameplate> nameplates = new HashMap<>();
   @Getter private final HashMap<Integer, SpritePixels> overriddenSprites = new HashMap<>();
 
   private static final int[] spritesToHide = {
@@ -225,7 +241,7 @@ public class NameplatesPlugin extends Plugin {
     }
 
     if (actor.getHealthScale() == -1) {
-      NpcHpCacheEntry cacheEntry = getHpCacheEntryForActor(actor);
+      HpCacheEntry cacheEntry = getHpCacheEntryForActor(actor);
       if (cacheEntry != null) {
         return cacheEntry.getHp();
       }
@@ -256,23 +272,20 @@ public class NameplatesPlugin extends Plugin {
   }
 
   static int getActorId(Actor actor) {
-    return actor instanceof NPC ? ((NPC) actor).getIndex() : ((Player) actor).getId();
+    if (actor instanceof NPC) {
+      // Offset this by 2048 to avoid collisions with player ids
+      return ((NPC) actor).getIndex() + 2048;
+    }
+
+    return ((Player) actor).getId();
   }
 
-  private HashMap<Integer, NpcHpCacheEntry> getHpCacheForActor(Actor actor) {
-    return actor instanceof NPC ? npcHpCache : playerHpCache;
-  }
-
-  NpcHpCacheEntry getHpCacheEntryForActor(Actor actor) {
-    return getHpCacheForActor(actor).get(getActorId(actor));
-  }
-
-  HashMap<Integer, Nameplate> getNameplatesForActor(Actor actor) {
-    return actor instanceof NPC ? npcNameplates : playerNameplates;
+  HpCacheEntry getHpCacheEntryForActor(Actor actor) {
+    return hpCache.get(getActorId(actor));
   }
 
   Nameplate getNameplateForActor(Actor actor) {
-    return getNameplatesForActor(actor).get(getActorId(actor));
+    return nameplates.get(getActorId(actor));
   }
 
   private void updateHpCache(Actor actor) {
@@ -296,9 +309,7 @@ public class NameplatesPlugin extends Plugin {
     int actorId = getActorId(actor);
     int currentHealth = getCurrentHealth(actor, maxHealth);
     if (currentHealth > 0) {
-      HashMap<Integer, NpcHpCacheEntry> cache = getHpCacheForActor(actor);
-      NpcHpCacheEntry cacheEntry =
-          cache.computeIfAbsent(actorId, (k) -> new NpcHpCacheEntry(actorId));
+      HpCacheEntry cacheEntry = hpCache.computeIfAbsent(actorId, (k) -> new HpCacheEntry(actorId));
       if (actor.getHealthScale() != -1) {
         cacheEntry.setHealthScale(actor.getHealthScale());
       }
@@ -314,7 +325,7 @@ public class NameplatesPlugin extends Plugin {
     }
 
     int hp;
-    NpcHpCacheEntry cacheEntry = getHpCacheEntryForActor(actor);
+    HpCacheEntry cacheEntry = getHpCacheEntryForActor(actor);
     if (cacheEntry == null) {
       if (client.getLocalPlayer() != actor) {
         nameplate.getHpAnimationData().startAnimation(nameplate.getCurrentHealth(), 0, 200);
@@ -361,10 +372,7 @@ public class NameplatesPlugin extends Plugin {
     cacheCleaningTick++;
 
     if (cacheCleaningTick >= 10) {
-      npcHpCache.values().removeIf((entry) -> client.getTickCount() >= entry.getLastUpdate() + 500);
-      playerHpCache
-          .values()
-          .removeIf((entry) -> client.getTickCount() >= entry.getLastUpdate() + 500);
+      hpCache.values().removeIf((entry) -> client.getTickCount() >= entry.getLastUpdate() + 500);
 
       cacheCleaningTick = 0;
     }
@@ -374,34 +382,31 @@ public class NameplatesPlugin extends Plugin {
   public void onNpcSpawned(NpcSpawned npcSpawned) {
     NPC npc = npcSpawned.getNpc();
 
-    npcNameplates.put(npc.getIndex(), new Nameplate(this, npc));
+    nameplates.put(getActorId(npc), new Nameplate(this, npc));
   }
 
   @Subscribe
   public void onNpcDespawned(NpcDespawned npcDespawned) {
-    NPC npc = npcDespawned.getNpc();
-
-    npcNameplates.remove(npc.getIndex());
+    nameplates.remove(getActorId(npcDespawned.getNpc()));
   }
 
   @Subscribe
   public void onPlayerSpawned(PlayerSpawned playerSpawned) {
     Player player = playerSpawned.getPlayer();
 
-    playerNameplates.put(player.getId(), new Nameplate(this, player));
+    nameplates.put(getActorId(player), new Nameplate(this, player));
   }
 
   @Subscribe
   public void onPlayerDespawned(PlayerDespawned playerDespawned) {
-    Player player = playerDespawned.getPlayer();
-
-    playerNameplates.remove(player.getId());
+    nameplates.remove(getActorId(playerDespawned.getPlayer()));
   }
 
   @Subscribe
   public void onActorDeath(ActorDeath actorDeath) {
     Actor actor = actorDeath.getActor();
-    getHpCacheForActor(actor).remove(getActorId(actor));
+
+    hpCache.remove(getActorId(actor));
   }
 
   @Subscribe
