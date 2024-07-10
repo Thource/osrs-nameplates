@@ -68,7 +68,7 @@ public abstract class BaseTheme {
     return (int) (120 * scale);
   }
 
-  protected int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+  public int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
     return (int) (20 * scale);
   }
 

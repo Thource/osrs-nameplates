@@ -4,7 +4,11 @@ import dev.thource.runelite.nameplates.themes.BaseTheme;
 import dev.thource.runelite.nameplates.themes.Themes;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
@@ -31,62 +35,74 @@ public class NameplatesOverlay extends Overlay {
     lastRender = System.currentTimeMillis();
   }
 
+  private Map<LocalPoint, List<Actor>> getLocalPointActorMap() {
+    HashMap<LocalPoint, List<Actor>> map = new HashMap<>();
+
+    WorldView topLevelWorldView = client.getTopLevelWorldView();
+    Stream.of(topLevelWorldView.players(), topLevelWorldView.npcs())
+        .flatMap(IndexedObjectSet::stream)
+        .filter(this::shouldDrawFor)
+        .forEach(
+            (actor) ->
+                map.computeIfAbsent(actor.getLocalLocation(), (k) -> new ArrayList<>()).add(actor));
+
+    return map;
+  }
+
   @Override
   public Dimension render(Graphics2D graphics) {
     long deltaMs = System.currentTimeMillis() - lastRender;
 
     LocalPoint cameraPoint = new LocalPoint(client.getCameraX(), client.getCameraY());
 
-    WorldView topLevelWorldView = client.getTopLevelWorldView();
-    Stream.of(topLevelWorldView.npcs(), topLevelWorldView.players())
-        .flatMap(IndexedObjectSet::stream)
-        .filter(this::shouldDrawFor)
+    getLocalPointActorMap().entrySet().stream()
         .sorted(
             Comparator.comparingInt(
-                    (Actor actor) -> actor.getLocalLocation().distanceTo(cameraPoint))
+                    (Map.Entry<LocalPoint, List<Actor>> entry) ->
+                        entry.getKey().distanceTo(cameraPoint))
                 .reversed())
         .forEach(
-            actor -> {
-              Point point = actor.getCanvasTextLocation(graphics, " ", actor.getLogicalHeight());
-              if (point == null) {
-                return;
-              }
+            (entry) -> {
+              int stackHeight = 0;
+              List<Actor> actors = entry.getValue();
+              int firstActorHeight = actors.get(0).getLogicalHeight();
+              for (Actor actor : actors) {
+                Point point = actor.getCanvasTextLocation(graphics, " ", firstActorHeight);
+                if (point == null) {
+                  return;
+                }
 
-              Nameplate nameplate = plugin.getNameplateForActor(actor);
-              if (nameplate == null) {
-                return;
-              }
+                Nameplate nameplate = plugin.getNameplateForActor(actor);
+                if (nameplate == null) {
+                  return;
+                }
 
-              renderNameplate(
-                  graphics,
-                  nameplate,
-                  new Point(point.getX(), point.getY() - 16),
-                  actor.getLocalLocation().distanceTo(cameraPoint),
-                  actor);
-              nameplate.getHpAnimationData().progressBy(deltaMs);
+                stackHeight +=
+                    renderNameplate(
+                            graphics,
+                            nameplate,
+                            new Point(point.getX(), point.getY() - 16 - stackHeight),
+                            actor.getLocalLocation().distanceTo(cameraPoint),
+                            actor)
+                        + 4;
+                nameplate.getHpAnimationData().progressBy(deltaMs);
+              }
             });
-
-    //    theme.drawNameplate(graphics, new NameplateInfo("Test 0.6x", 50, 100, 23, new
-    // Point(400, 100), 0.6f));
-    //    theme.drawNameplate(graphics, new NameplateInfo("Test 1x", 50, 100, 23, new Point(400,
-    // 150), 1f));
-    //    theme.drawNameplate(graphics, new NameplateInfo("Test 2x", 50, 100, 23, new Point(400,
-    // 250), 2f));
-    //    theme.drawNameplate(graphics, new NameplateInfo("Test 3.3x", 50, 100, 23, new
-    // Point(400, 350), 3.3f));
 
     lastRender = System.currentTimeMillis();
 
     return null;
   }
 
-  private void renderNameplate(
+  private int renderNameplate(
       Graphics2D graphics, Nameplate nameplate, Point point, int distance, Actor actor) {
     //        float scale = Math.min(Math.max(8f / (distance / 300f), 0.5f), 1);
     //        scale = Math.max(scale * ((float) Math.pow(client.get3dZoom(), 0.6f) / 50f), 1f);
     float scale = 1;
 
-    getTheme(actor).drawNameplate(graphics, nameplate, point, scale, actor);
+    BaseTheme theme = getTheme(actor);
+    theme.drawNameplate(graphics, nameplate, point, scale, actor);
+    return theme.getHeight(graphics, scale, nameplate);
   }
 
   private BaseTheme getTheme(Actor actor) {

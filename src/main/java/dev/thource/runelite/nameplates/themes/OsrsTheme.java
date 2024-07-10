@@ -128,7 +128,7 @@ public class OsrsTheme extends BaseTheme {
   }
 
   @Override
-  protected int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+  public int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
     return 7;
   }
 }

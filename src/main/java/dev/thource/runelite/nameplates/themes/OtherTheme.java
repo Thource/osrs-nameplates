@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import net.runelite.api.Actor;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
 public class OtherTheme extends BaseTheme {
@@ -96,9 +97,18 @@ public class OtherTheme extends BaseTheme {
     }
 
     if (nameplate.getMaxHealth() > 0) {
-      String currentHealthString = String.valueOf(nameplate.getCurrentHealth());
-      String maxHealthString = String.valueOf(nameplate.getMaxHealth());
-      String healthString = currentHealthString + " / " + maxHealthString;
+      String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
+      HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
+      if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
+        double percentage = Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
+
+        if (displayStyle == HitpointsDisplayStyle.PERCENTAGE) {
+          healthString = percentage + "%";
+        } else {
+          healthString += " (" + percentage + "%)";
+        }
+      }
+
       Rectangle2D bounds = fontMetrics.getStringBounds(healthString, graphics);
 
       graphics.setColor(Color.WHITE);
@@ -133,17 +143,16 @@ public class OtherTheme extends BaseTheme {
 
     BufferedImage overheadImage = overheadIcon.getImage();
     graphics.drawImage(
-        overheadImage.getScaledInstance(
-            plateHeight, plateHeight, Image.SCALE_SMOOTH), // TODO: optimise this
+        overheadImage.getScaledInstance(height, height, Image.SCALE_SMOOTH), // TODO: optimise this
         rightX + (int) (6 * scale),
-        topY + getTitleHeight(scale),
-        plateHeight,
-        plateHeight,
+        topY,
+        height,
+        height,
         null);
   }
 
   @Override
-  protected int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+  public int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
     if (nameplate.getMaxHealth() <= 0) {
       graphics.setFont(
           FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
