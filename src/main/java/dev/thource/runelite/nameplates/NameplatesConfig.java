@@ -2,6 +2,8 @@ package dev.thource.runelite.nameplates;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 
 /** ImprovedContextMenuConfig manages the config for the plugin. */
 @SuppressWarnings("SameReturnValue")
@@ -10,6 +12,14 @@ public interface NameplatesConfig extends Config {
 
   String CONFIG_GROUP = "nameplates";
 
+  @ConfigItem(
+          keyName = "hitpointsDisplayStyle",
+          name = "Hitpoints display style",
+          description = "Show hitpoints as a value, percentage, or both"
+  )
+  default HitpointsDisplayStyle hitpointsDisplayStyle() {
+    return HitpointsDisplayStyle.HITPOINTS;
+  }
   // draw nameplates for players
   // draw nameplates for npcs
   // draw nameplates on hover
