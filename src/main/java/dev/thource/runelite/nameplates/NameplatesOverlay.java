@@ -47,9 +47,7 @@ public class NameplatesOverlay extends Overlay {
                 .reversed())
         .forEach(
             actor -> {
-              Point point =
-                  actor.getCanvasTextLocation(
-                      graphics, " ", (int) (actor.getLogicalHeight() * 1.4f));
+              Point point = actor.getCanvasTextLocation(graphics, " ", actor.getLogicalHeight());
               if (point == null) {
                 return;
               }
@@ -62,7 +60,7 @@ public class NameplatesOverlay extends Overlay {
               renderNameplate(
                   graphics,
                   nameplate,
-                  point,
+                  new Point(point.getX(), point.getY() - 16),
                   actor.getLocalLocation().distanceTo(cameraPoint),
                   actor);
               nameplate.getHpAnimationData().progressBy(deltaMs);

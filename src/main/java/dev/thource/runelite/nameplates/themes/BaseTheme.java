@@ -50,7 +50,7 @@ public abstract class BaseTheme {
 
     //        Composite oldComposite = graphics.getComposite();
     //        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
-    graphics.drawImage(plate, anchor.getX() - width / 2, anchor.getY() - height / 2, null);
+    graphics.drawImage(plate, anchor.getX() - width / 2, anchor.getY() - height, null);
     //        graphics.setComposite(oldComposite);
   }
 
