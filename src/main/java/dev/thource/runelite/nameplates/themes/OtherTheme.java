@@ -5,8 +5,6 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
-import net.runelite.api.Actor;
-import net.runelite.api.Point;
 import net.runelite.client.ui.FontManager;
 
 public class OtherTheme extends BaseTheme {
@@ -103,25 +101,6 @@ public class OtherTheme extends BaseTheme {
           width / 2 - (int) bounds.getWidth() / 2,
           (int) (titleHeight + plateHeight / 2f + bounds.getHeight() / 2));
     }
-  }
-
-  @Override
-  protected void drawDebugData(
-      Graphics2D graphics,
-      int width,
-      int height,
-      float scale,
-      Nameplate nameplate,
-      Point anchor,
-      Actor actor) {
-    int leftX = anchor.getX() - width / 2;
-    int bottomY = anchor.getY() + height / 2;
-
-    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
-    graphics.setColor(Color.WHITE);
-    graphics.drawString("hr: " + actor.getHealthRatio(), leftX + 2, bottomY + 10 * scale);
-    graphics.drawString("hs: " + actor.getHealthScale(), leftX + 2, bottomY + 20 * scale);
-    graphics.drawString("sc: " + scale, leftX + 2, bottomY + 30 * scale);
   }
 
   @Override
