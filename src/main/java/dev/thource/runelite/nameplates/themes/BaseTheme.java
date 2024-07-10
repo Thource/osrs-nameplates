@@ -19,6 +19,15 @@ public abstract class BaseTheme {
   protected abstract void drawOverlay(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate);
 
+  protected void drawExternal(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      Actor actor) {}
+
   protected void drawDebugData(
       Graphics2D graphics,
       int width,
@@ -28,7 +37,7 @@ public abstract class BaseTheme {
       Point anchor,
       Actor actor) {
     int leftX = anchor.getX() - width / 2;
-    int bottomY = anchor.getY() + height / 2;
+    int bottomY = anchor.getY();
 
     graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
     graphics.setColor(Color.WHITE);
@@ -46,6 +55,7 @@ public abstract class BaseTheme {
     Graphics2D plateGraphics = plate.createGraphics();
     drawBasePlate(plateGraphics, width, height, scale, nameplate);
     drawOverlay(plateGraphics, width, height, scale, nameplate);
+    drawExternal(graphics, width, height, scale, nameplate, anchor, actor);
     //        drawDebugData(graphics, width, height, scale, nameplate, anchor, actor);
 
     //        Composite oldComposite = graphics.getComposite();

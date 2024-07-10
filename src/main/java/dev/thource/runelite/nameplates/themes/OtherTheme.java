@@ -1,10 +1,16 @@
 package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
+import dev.thource.runelite.nameplates.NameplateHeadIcon;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import net.runelite.api.Actor;
+import net.runelite.api.Player;
+import net.runelite.api.Point;
 import net.runelite.client.ui.FontManager;
 
 public class OtherTheme extends BaseTheme {
@@ -101,6 +107,39 @@ public class OtherTheme extends BaseTheme {
           width / 2 - (int) bounds.getWidth() / 2,
           (int) (titleHeight + plateHeight / 2f + bounds.getHeight() / 2));
     }
+  }
+
+  @Override
+  protected void drawExternal(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      Actor actor) {
+    if (!(actor instanceof Player)) {
+      return;
+    }
+
+    NameplateHeadIcon overheadIcon = NameplateHeadIcon.get(((Player) actor).getOverheadIcon());
+    if (overheadIcon == null) {
+      return;
+    }
+
+    int rightX = anchor.getX() + width / 2;
+    int topY = anchor.getY() - height;
+    int plateHeight = getPlateHeight(graphics, scale, nameplate);
+
+    BufferedImage overheadImage = overheadIcon.getImage();
+    graphics.drawImage(
+        overheadImage.getScaledInstance(
+            plateHeight, plateHeight, Image.SCALE_SMOOTH), // TODO: optimise this
+        rightX + (int) (6 * scale),
+        topY + getTitleHeight(scale),
+        plateHeight,
+        plateHeight,
+        null);
   }
 
   @Override
