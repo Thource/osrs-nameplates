@@ -3,6 +3,7 @@ package dev.thource.runelite.nameplates.themes;
 import dev.thource.runelite.nameplates.Nameplate;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import net.runelite.api.Point;
 import net.runelite.api.SpriteID;
 import net.runelite.api.SpritePixels;
 
@@ -10,8 +11,6 @@ public class OsrsTheme extends BaseTheme {
   @Override
   protected void drawBasePlate(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    int frontWidth = (int) (width * nameplate.getHealthPercentage());
-
     SpritePixels healthbarBackSprite = getHealthbarBackSprite(nameplate.getHealthScale());
     if (healthbarBackSprite != null) {
       graphics.drawImage(healthbarBackSprite.toBufferedImage(), null, 0, 0);
@@ -19,7 +18,20 @@ public class OsrsTheme extends BaseTheme {
       graphics.setColor(Color.RED);
       graphics.fillRect(0, 0, width, height);
     }
+  }
 
+  @Override
+  protected void drawName(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
+
+  @Override
+  protected void drawCombatLevel(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
+
+  @Override
+  protected void drawHealthBar(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
+    int frontWidth = (int) (width * nameplate.getHealthPercentage());
     SpritePixels healthbarFrontSprite = getHealthbarFrontSprite(nameplate.getHealthScale());
     if (healthbarFrontSprite != null) {
       graphics.drawImage(
@@ -38,6 +50,14 @@ public class OsrsTheme extends BaseTheme {
       graphics.fillRect(0, 0, frontWidth, height);
     }
   }
+
+  @Override
+  protected void drawPrayerBar(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
+
+  @Override
+  protected void drawOverheads(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {}
 
   private SpritePixels getHealthbarBackSprite(int healthScale) {
     int spriteId;
@@ -112,10 +132,6 @@ public class OsrsTheme extends BaseTheme {
 
     return plugin.getOverriddenSprites().get(spriteId);
   }
-
-  @Override
-  protected void drawOverlay(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
 
   @Override
   protected int getWidth(Graphics2D graphics, float scale, Nameplate nameplate) {

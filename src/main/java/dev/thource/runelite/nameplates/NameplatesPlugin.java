@@ -344,7 +344,7 @@ public class NameplatesPlugin extends Plugin {
       nameplate.getHpAnimationData().startAnimation(nameplate.getCurrentHealth(), hp, 200);
       nameplate.setCurrentHealth(hp);
     }
-    nameplate.updateFromActor(this, actor);
+    nameplate.updateFromActor(this);
   }
 
   @Subscribe
@@ -382,7 +382,7 @@ public class NameplatesPlugin extends Plugin {
   public void onNpcSpawned(NpcSpawned npcSpawned) {
     NPC npc = npcSpawned.getNpc();
 
-    nameplates.put(getActorId(npc), new Nameplate(this, npc));
+    nameplates.put(getActorId(npc), new NPCNameplate(this, npc));
   }
 
   @Subscribe
@@ -394,7 +394,7 @@ public class NameplatesPlugin extends Plugin {
   public void onPlayerSpawned(PlayerSpawned playerSpawned) {
     Player player = playerSpawned.getPlayer();
 
-    nameplates.put(getActorId(player), new Nameplate(this, player));
+    nameplates.put(getActorId(player), new PlayerNameplate(this, player));
   }
 
   @Subscribe

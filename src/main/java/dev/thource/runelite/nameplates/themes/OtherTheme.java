@@ -8,9 +8,9 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import net.runelite.api.Actor;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.api.Skill;
 import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
@@ -28,40 +28,59 @@ public class OtherTheme extends BaseTheme {
     //        graphics.setColor(Color.RED);
     //        graphics.fillRect(0, 0, width, height);
 
+    int plateHeight = getPlateHeight(graphics, scale, nameplate);
+    if (shouldDrawPrayerBar(nameplate.getActor())) {
+      plateHeight *= 2;
+    }
+
     graphics.setColor(new Color(0.1f, 0.1f, 0.1f));
-    graphics.fillRect(0, getTitleHeight(scale), width, getPlateHeight(graphics, scale, nameplate));
-  }
-
-  private static int getTitleHeight(float scale) {
-    return (int) Math.floor(TITLE_HEIGHT * scale);
-  }
-
-  private int getPlateHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
-    return getHeight(graphics, scale, nameplate) - getTitleHeight(scale);
+    graphics.fillRect(0, getTitleHeight(scale), width, plateHeight);
   }
 
   @Override
-  protected void drawOverlay(
+  protected void drawName(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (nameplate.getMaxHealth() <= 0) {
-      if (nameplate.getName() == null
-          || nameplate.getName().isEmpty()
-          || nameplate.getName().equals("null")) {
-        return;
-      }
-
-      graphics.setFont(
-          FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
-      FontMetrics fontMetrics = graphics.getFontMetrics();
-
-      int textLineY =
-          (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
-      graphics.setColor(Color.WHITE);
-      graphics.drawString(nameplate.getName(), 0, textLineY);
-
+    if (plugin.getConfig().drawNameInHealthBar()) {
       return;
     }
 
+    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+    FontMetrics fontMetrics = graphics.getFontMetrics();
+
+    int textLineY =
+        (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
+    graphics.setColor(Color.WHITE);
+    graphics.drawString(nameplate.getName(), nameplate.getMaxHealth() <= 0 ? 0 : 2, textLineY);
+  }
+
+  @Override
+  protected void drawCombatLevel(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
+    if (plugin.getConfig().drawNameInHealthBar()) {
+      // TODO: figure out where to draw combat level
+      return;
+    }
+
+    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+    FontMetrics fontMetrics = graphics.getFontMetrics();
+    String combatLevelString = String.valueOf(nameplate.getCombatLevel());
+    Rectangle2D combatLevelBounds = fontMetrics.getStringBounds(combatLevelString, graphics);
+
+    int textLineY =
+        (int)
+            (fontMetrics
+                    .getStringBounds(String.valueOf(nameplate.getCombatLevel()), graphics)
+                    .getHeight()
+                * 0.9f);
+    graphics.setColor(
+        getLevelColor(
+            plugin.getClient().getLocalPlayer().getCombatLevel(), nameplate.getCombatLevel()));
+    graphics.drawString(combatLevelString, (int) (width - combatLevelBounds.getWidth()), textLineY);
+  }
+
+  @Override
+  protected void drawHealthBar(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
     int borderSize = (int) Math.ceil(scale);
     int titleHeight = getTitleHeight(scale);
     int plateHeight = getPlateHeight(graphics, scale, nameplate);
@@ -73,73 +92,104 @@ public class OtherTheme extends BaseTheme {
         (int) ((width - borderSize * 2) * nameplate.getHealthPercentage()),
         plateHeight - borderSize * 2);
 
+    String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
+    HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
+    if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
+      double percentage =
+          Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
+
+      if (displayStyle == HitpointsDisplayStyle.PERCENTAGE) {
+        healthString = percentage + "%";
+      } else {
+        healthString += " (" + percentage + "%)";
+      }
+    }
+
     graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
     FontMetrics fontMetrics = graphics.getFontMetrics();
+    Rectangle2D healthBounds = fontMetrics.getStringBounds(healthString, graphics);
 
-    int textLineY =
-        (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
-    if (nameplate.getName() != null
-        && !nameplate.getName().isEmpty()
-        && !nameplate.getName().equals("null")) {
-      graphics.setColor(Color.WHITE);
-      graphics.drawString(nameplate.getName(), 2, textLineY);
-    }
-
-    if (nameplate.getCombatLevel() > 0) {
-      String combatLevelString = String.valueOf(nameplate.getCombatLevel());
-      Rectangle2D combatLevelBounds = fontMetrics.getStringBounds(combatLevelString, graphics);
-
-      graphics.setColor(
-          getLevelColor(
-              plugin.getClient().getLocalPlayer().getCombatLevel(), nameplate.getCombatLevel()));
+    graphics.setColor(Color.WHITE);
+    if (plugin.getConfig().drawNameInHealthBar()) {
+      Rectangle2D nameBounds = fontMetrics.getStringBounds(nameplate.getName(), graphics);
       graphics.drawString(
-          combatLevelString, (int) (width - combatLevelBounds.getWidth()), textLineY);
-    }
-
-    if (nameplate.getMaxHealth() > 0) {
-      String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
-      HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
-      if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
-        double percentage = Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
-
-        if (displayStyle == HitpointsDisplayStyle.PERCENTAGE) {
-          healthString = percentage + "%";
-        } else {
-          healthString += " (" + percentage + "%)";
-        }
-      }
-
-      Rectangle2D bounds = fontMetrics.getStringBounds(healthString, graphics);
-
-      graphics.setColor(Color.WHITE);
+          nameplate.getName(),
+          borderSize + 2 * scale,
+          (int) (titleHeight + plateHeight / 2f + nameBounds.getHeight() / 2));
       graphics.drawString(
           healthString,
-          width / 2 - (int) bounds.getWidth() / 2,
-          (int) (titleHeight + plateHeight / 2f + bounds.getHeight() / 2));
+          width - borderSize - 2 - (int) healthBounds.getWidth(),
+          (int) (titleHeight + plateHeight / 2f + healthBounds.getHeight() / 2));
+    } else {
+      graphics.drawString(
+          healthString,
+          width / 2 - (int) healthBounds.getWidth() / 2,
+          (int) (titleHeight + plateHeight / 2f + healthBounds.getHeight() / 2));
     }
   }
 
   @Override
-  protected void drawExternal(
-      Graphics2D graphics,
-      int width,
-      int height,
-      float scale,
-      Nameplate nameplate,
-      Point anchor,
-      Actor actor) {
-    if (!(actor instanceof Player)) {
+  protected void drawPrayerBar(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
+    int borderSize = (int) Math.ceil(scale);
+    int titleHeight = getTitleHeight(scale);
+    int plateHeight = getPlateHeight(graphics, scale, nameplate);
+    int currentPrayer = plugin.getClient().getBoostedSkillLevel(Skill.PRAYER);
+    int maxPrayer = plugin.getClient().getRealSkillLevel(Skill.PRAYER);
+    float prayerPercentage = (float) currentPrayer / maxPrayer;
+
+    graphics.setColor(new Color(40, 200, 180));
+    graphics.fillRect(
+        borderSize,
+        titleHeight + plateHeight + borderSize,
+        (int) ((width - borderSize * 2) * prayerPercentage),
+        plateHeight - borderSize * 2);
+
+    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+    FontMetrics fontMetrics = graphics.getFontMetrics();
+    String prayerString = currentPrayer + " / " + maxPrayer;
+    Rectangle2D bounds = fontMetrics.getStringBounds(prayerString, graphics);
+
+    graphics.setColor(Color.WHITE);
+    graphics.drawString(
+        prayerString,
+        width / 2 - (int) bounds.getWidth() / 2,
+        (int) (titleHeight + plateHeight * 1.5f + bounds.getHeight() / 2));
+  }
+
+  private int getTitleHeight(float scale) {
+    if (plugin.getConfig().drawNameInHealthBar()) {
+      return 0;
+    }
+
+    return (int) Math.floor(TITLE_HEIGHT * scale);
+  }
+
+  private int getPlateHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+    int plateHeight = getHeight(graphics, scale, nameplate) - getTitleHeight(scale);
+
+    if (shouldDrawPrayerBar(nameplate.getActor())) {
+      return plateHeight / 2;
+    }
+
+    return plateHeight;
+  }
+
+  @Override
+  protected void drawOverheads(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
+    if (!(nameplate.getActor() instanceof Player)) {
       return;
     }
 
-    NameplateHeadIcon overheadIcon = NameplateHeadIcon.get(((Player) actor).getOverheadIcon());
+    NameplateHeadIcon overheadIcon =
+        NameplateHeadIcon.get(((Player) nameplate.getActor()).getOverheadIcon());
     if (overheadIcon == null) {
       return;
     }
 
     int rightX = anchor.getX() + width / 2;
     int topY = anchor.getY() - height;
-    int plateHeight = getPlateHeight(graphics, scale, nameplate);
 
     BufferedImage overheadImage = overheadIcon.getImage();
     graphics.drawImage(
@@ -161,7 +211,14 @@ public class OtherTheme extends BaseTheme {
       return (int) fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight();
     }
 
-    return (int) ((TITLE_HEIGHT + PLATE_HEIGHT) * scale);
+    int height = PLATE_HEIGHT;
+    if (!plugin.getConfig().drawNameInHealthBar()) {
+      height += TITLE_HEIGHT;
+    }
+    if (shouldDrawPrayerBar(nameplate.getActor())) {
+      height += PLATE_HEIGHT;
+    }
+    return (int) (height * scale);
   }
 
   @Override

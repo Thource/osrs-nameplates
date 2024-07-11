@@ -101,7 +101,7 @@ public class NameplatesOverlay extends Overlay {
     float scale = 1;
 
     BaseTheme theme = getTheme(actor);
-    theme.drawNameplate(graphics, nameplate, point, scale, actor);
+    theme.drawNameplate(graphics, nameplate, point, scale);
     return theme.getHeight(graphics, scale, nameplate);
   }
 
