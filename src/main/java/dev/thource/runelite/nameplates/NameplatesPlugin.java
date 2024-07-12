@@ -34,6 +34,7 @@ import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.events.PlayerSpawned;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -53,6 +54,7 @@ import net.runelite.client.util.ImageUtil;
     tags = {"nameplates", "health", "npcs"})
 public class NameplatesPlugin extends Plugin {
 
+  private static final int NORMAL_HP_REGEN_TICKS = 100;
   @Getter @Inject private Client client;
   @Getter @Inject private ClientThread clientThread;
   @Getter @Inject private NameplatesConfig config;
@@ -177,6 +179,7 @@ public class NameplatesPlugin extends Plugin {
   SpritePixels transparent;
   @Getter private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL;
   private Instant startOfLastTick = Instant.now();
+  private int ticksSinceHPRegen;
 
   private void overrideSprites() {
     Map<Integer, SpritePixels> overrides = client.getSpriteOverrides();
@@ -355,6 +358,11 @@ public class NameplatesPlugin extends Plugin {
 
   @Subscribe
   public void onGameStateChanged(GameStateChanged gameStateChanged) {
+    if (gameStateChanged.getGameState() == GameState.HOPPING
+        || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN) {
+      ticksSinceHPRegen = -2; // For some reason this makes this accurate
+    }
+
     if (gameStateChanged.getGameState() != GameState.LOGGED_IN) {
       return;
     }
@@ -365,6 +373,17 @@ public class NameplatesPlugin extends Plugin {
   @Subscribe
   public void onGameTick(GameTick tick) {
     startOfLastTick = Instant.now();
+
+    int ticksPerHPRegen = NORMAL_HP_REGEN_TICKS;
+    if (client.isPrayerActive(Prayer.RAPID_HEAL)) {
+      ticksPerHPRegen /= 2;
+    }
+
+    ticksSinceHPRegen = (ticksSinceHPRegen + 1) % ticksPerHPRegen;
+
+    if (client.getBoostedSkillLevel(Skill.HITPOINTS) == client.getRealSkillLevel(Skill.HITPOINTS)) {
+      ticksSinceHPRegen = 0;
+    }
 
     overrideSprites();
 
@@ -383,6 +402,13 @@ public class NameplatesPlugin extends Plugin {
       hpCache.values().removeIf((entry) -> client.getTickCount() >= entry.getLastUpdate() + 500);
 
       cacheCleaningTick = 0;
+    }
+  }
+
+  @Subscribe
+  private void onVarbitChanged(VarbitChanged varbitChanged) {
+    if (varbitChanged.getVarbitId() == Varbits.PRAYER_RAPID_HEAL) {
+      ticksSinceHPRegen = 0;
     }
   }
 
@@ -430,6 +456,15 @@ public class NameplatesPlugin extends Plugin {
     long timeSinceLastTick = Duration.between(startOfLastTick, Instant.now()).toMillis();
 
     return (timeSinceLastTick % Constants.GAME_TICK_LENGTH) / (float) Constants.GAME_TICK_LENGTH;
+  }
+
+  public double getHpRegenProgress() {
+    int ticksPerHPRegen = NORMAL_HP_REGEN_TICKS;
+    if (client.isPrayerActive(Prayer.RAPID_HEAL)) {
+      ticksPerHPRegen /= 2;
+    }
+
+    return (double) ticksSinceHPRegen / ticksPerHPRegen;
   }
 
   public boolean isAnyPrayerActive() {

@@ -45,10 +45,16 @@ public interface NameplatesConfig extends Config {
     return false;
   }
 
+  @ConfigItem(
+      keyName = "drawHpRegenIndicator",
+      name = "Draw hp regen indicator",
+      description = "If enabled, draws the hp regen indicator")
+  default boolean drawHpRegenIndicator() {
+    return false;
+  }
+
   // consumable healing indicator (display that hp will go up by 20 if you eat a shark, etc)
-  // health regen indicator
   // poison damage indicator
-  // prayer 1-tick flick indicator
 
   // draw nameplates for players
   // draw nameplates for npcs

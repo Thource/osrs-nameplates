@@ -84,13 +84,29 @@ public class OtherTheme extends BaseTheme {
     int borderSize = (int) Math.ceil(scale);
     int titleHeight = getTitleHeight(scale);
     int plateHeight = getPlateHeight(graphics, scale, nameplate);
+    int barTopY = titleHeight + borderSize;
+    int barHeight = plateHeight - borderSize * 2;
 
     graphics.setColor(new Color(120, 50, 40));
     graphics.fillRect(
         borderSize,
         titleHeight + borderSize,
-        (int) ((width - borderSize * 2) * nameplate.getHealthPercentage()),
+        (int) ((width - borderSize * 2) * Math.min(1, nameplate.getHealthPercentage())),
         plateHeight - borderSize * 2);
+
+    if (plugin.getConfig().drawHpRegenIndicator()
+        && nameplate.getActor() == plugin.getClient().getLocalPlayer()) {
+      double indicatorProgress = plugin.getHpRegenProgress();
+      if (indicatorProgress > 0) {
+        if (nameplate.getHealthPercentage() > 1) {
+          indicatorProgress = Math.max(0, 1 - indicatorProgress);
+        }
+        int indicatorX = (int) (borderSize + (width - borderSize * 2) * indicatorProgress);
+
+        graphics.setColor(Color.LIGHT_GRAY);
+        graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
+      }
+    }
 
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
     HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
@@ -142,7 +158,10 @@ public class OtherTheme extends BaseTheme {
 
     graphics.setColor(new Color(20, 120, 110));
     graphics.fillRect(
-        borderSize, barTopY, (int) ((width - borderSize * 2) * prayerPercentage), barHeight);
+        borderSize,
+        barTopY,
+        (int) ((width - borderSize * 2) * Math.min(1, prayerPercentage)),
+        barHeight);
 
     if (plugin.getConfig().drawPrayerFlickIndicator() && plugin.isAnyPrayerActive()) {
       double indicatorProgress = Math.max(0, 1 - plugin.getTickProgress());
