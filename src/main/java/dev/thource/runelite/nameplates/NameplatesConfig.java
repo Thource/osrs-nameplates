@@ -37,6 +37,14 @@ public interface NameplatesConfig extends Config {
     return false;
   }
 
+  @ConfigItem(
+      keyName = "drawPrayerFlickIndicator",
+      name = "Draw prayer flick indicator",
+      description = "If enabled, draws the prayer flick indicator")
+  default boolean drawPrayerFlickIndicator() {
+    return false;
+  }
+
   // consumable healing indicator (display that hp will go up by 20 if you eat a shark, etc)
   // health regen indicator
   // poison damage indicator

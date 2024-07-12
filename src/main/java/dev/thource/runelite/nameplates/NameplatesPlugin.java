@@ -3,6 +3,9 @@ package dev.thource.runelite.nameplates;
 import com.google.inject.Provides;
 import dev.thource.runelite.nameplates.themes.Themes;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -11,10 +14,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
+import net.runelite.api.Constants;
 import net.runelite.api.GameState;
 import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.api.SpritePixels;
@@ -171,6 +176,7 @@ public class NameplatesPlugin extends Plugin {
   private int cacheCleaningTick;
   SpritePixels transparent;
   @Getter private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL;
+  private Instant startOfLastTick = Instant.now();
 
   private void overrideSprites() {
     Map<Integer, SpritePixels> overrides = client.getSpriteOverrides();
@@ -358,6 +364,8 @@ public class NameplatesPlugin extends Plugin {
 
   @Subscribe
   public void onGameTick(GameTick tick) {
+    startOfLastTick = Instant.now();
+
     overrideSprites();
 
     WorldView topLevelWorldView = client.getTopLevelWorldView();
@@ -416,6 +424,16 @@ public class NameplatesPlugin extends Plugin {
             + hitsplatApplied.getActor().getName()
             + ": "
             + hitsplatApplied.getHitsplat().getAmount());
+  }
+
+  public double getTickProgress() {
+    long timeSinceLastTick = Duration.between(startOfLastTick, Instant.now()).toMillis();
+
+    return (timeSinceLastTick % Constants.GAME_TICK_LENGTH) / (float) Constants.GAME_TICK_LENGTH;
+  }
+
+  public boolean isAnyPrayerActive() {
+    return Arrays.stream(Prayer.values()).anyMatch(p -> client.isPrayerActive(p));
   }
 
   @Provides

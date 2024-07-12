@@ -137,13 +137,20 @@ public class OtherTheme extends BaseTheme {
     int currentPrayer = plugin.getClient().getBoostedSkillLevel(Skill.PRAYER);
     int maxPrayer = plugin.getClient().getRealSkillLevel(Skill.PRAYER);
     float prayerPercentage = (float) currentPrayer / maxPrayer;
+    int barTopY = titleHeight + plateHeight + borderSize;
+    int barHeight = plateHeight - borderSize * 2;
 
     graphics.setColor(new Color(20, 120, 110));
     graphics.fillRect(
-        borderSize,
-        titleHeight + plateHeight + borderSize,
-        (int) ((width - borderSize * 2) * prayerPercentage),
-        plateHeight - borderSize * 2);
+        borderSize, barTopY, (int) ((width - borderSize * 2) * prayerPercentage), barHeight);
+
+    if (plugin.getConfig().drawPrayerFlickIndicator() && plugin.isAnyPrayerActive()) {
+      double indicatorProgress = Math.max(0, 1 - plugin.getTickProgress());
+      int indicatorX = (int) (borderSize + (width - borderSize * 2) * indicatorProgress);
+
+      graphics.setColor(Color.LIGHT_GRAY);
+      graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
+    }
 
     graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
     FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -154,7 +161,7 @@ public class OtherTheme extends BaseTheme {
     graphics.drawString(
         prayerString,
         width / 2 - (int) bounds.getWidth() / 2,
-        (int) (titleHeight + plateHeight * 1.5f + bounds.getHeight() / 2));
+        (int) (barTopY + barHeight * 0.5f + bounds.getHeight() / 2));
   }
 
   private int getTitleHeight(float scale) {
