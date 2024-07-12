@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.IndexedObjectSet;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
@@ -39,9 +40,13 @@ public class NameplatesOverlay extends Overlay {
     HashMap<LocalPoint, List<Actor>> map = new HashMap<>();
 
     WorldView topLevelWorldView = client.getTopLevelWorldView();
+
+    Player localPlayer = client.getLocalPlayer();
+    map.computeIfAbsent(localPlayer.getLocalLocation(), (k) -> new ArrayList<>()).add(localPlayer);
     Stream.of(topLevelWorldView.players(), topLevelWorldView.npcs())
         .flatMap(IndexedObjectSet::stream)
         .filter(this::shouldDrawFor)
+        .filter((actor) -> actor != localPlayer)
         .forEach(
             (actor) ->
                 map.computeIfAbsent(actor.getLocalLocation(), (k) -> new ArrayList<>()).add(actor));
