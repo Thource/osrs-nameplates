@@ -138,7 +138,7 @@ public class OtherTheme extends BaseTheme {
     int maxPrayer = plugin.getClient().getRealSkillLevel(Skill.PRAYER);
     float prayerPercentage = (float) currentPrayer / maxPrayer;
 
-    graphics.setColor(new Color(40, 200, 180));
+    graphics.setColor(new Color(20, 120, 110));
     graphics.fillRect(
         borderSize,
         titleHeight + plateHeight + borderSize,
@@ -190,14 +190,21 @@ public class OtherTheme extends BaseTheme {
 
     int rightX = anchor.getX() + width / 2;
     int topY = anchor.getY() - height;
+    int overheadSize = height;
+
+    // reduce overhead size to ensure consistency
+    if (shouldDrawPrayerBar(nameplate.getActor())) {
+      overheadSize -= getPlateHeight(graphics, scale, nameplate);
+    }
 
     BufferedImage overheadImage = overheadIcon.getImage();
     graphics.drawImage(
-        overheadImage.getScaledInstance(height, height, Image.SCALE_SMOOTH), // TODO: optimise this
+        overheadImage.getScaledInstance(
+            overheadSize, overheadSize, Image.SCALE_SMOOTH), // TODO: optimise this
         rightX + (int) (6 * scale),
         topY,
-        height,
-        height,
+        overheadSize,
+        overheadSize,
         null);
   }
 
