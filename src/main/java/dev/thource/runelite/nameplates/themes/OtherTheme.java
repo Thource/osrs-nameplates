@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
+import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
@@ -85,14 +86,35 @@ public class OtherTheme extends BaseTheme {
     int titleHeight = getTitleHeight(scale);
     int plateHeight = getPlateHeight(graphics, scale, nameplate);
     int barTopY = titleHeight + borderSize;
+    int fullBarWidth = (width - borderSize * 2);
+    int barWidth = (int) (fullBarWidth * Math.min(1, nameplate.getHealthPercentage()));
     int barHeight = plateHeight - borderSize * 2;
 
     graphics.setColor(new Color(120, 50, 40));
-    graphics.fillRect(
-        borderSize,
-        titleHeight + borderSize,
-        (int) ((width - borderSize * 2) * Math.min(1, nameplate.getHealthPercentage())),
-        plateHeight - borderSize * 2);
+    graphics.fillRect(borderSize, titleHeight + borderSize, barWidth, barHeight);
+
+    StatChange hpChange = null;
+    if (plugin.getConfig().drawConsumableHealAmount()) {
+      hpChange = plugin.getHoveredItemHpChange();
+    }
+
+    if (hpChange != null && hpChange.getRelative() != 0) {
+      Color changeColor = new Color(80, 30, 20);
+      if (hpChange.getRelative() > 0 && hpChange.getRelative() != hpChange.getTheoretical()) {
+        changeColor = new Color(100, 80, 0);
+      }
+      graphics.setColor(changeColor);
+
+      int changeWidth =
+          (int) (fullBarWidth * ((float) hpChange.getRelative() / nameplate.getMaxHealth()));
+      int changeOffset = 0;
+      if (changeWidth < 0) {
+        changeOffset = changeWidth;
+        changeWidth = -changeWidth;
+      }
+      graphics.fillRect(
+          borderSize + barWidth + changeOffset, titleHeight + borderSize, changeWidth, barHeight);
+    }
 
     if (plugin.getConfig().drawHpRegenIndicator()
         && nameplate.getActor() == plugin.getClient().getLocalPlayer()) {
@@ -101,11 +123,33 @@ public class OtherTheme extends BaseTheme {
         if (nameplate.getHealthPercentage() > 1) {
           indicatorProgress = Math.max(0, 1 - indicatorProgress);
         }
-        int indicatorX = (int) (borderSize + (width - borderSize * 2) * indicatorProgress);
+        int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
 
         graphics.setColor(Color.LIGHT_GRAY);
         graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
       }
+    }
+
+    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
+    FontMetrics fontMetrics = graphics.getFontMetrics();
+
+    if (hpChange != null && hpChange.getRelative() != 0) {
+      Color changeColor = new Color(60, 200, 40);
+      if (hpChange.getRelative() > 0) {
+        if (hpChange.getRelative() != hpChange.getTheoretical()) {
+          changeColor = new Color(200, 200, 60);
+        }
+      } else {
+        changeColor = new Color(200, 50, 50);
+      }
+      graphics.setColor(changeColor);
+
+      Rectangle2D changeBounds =
+          fontMetrics.getStringBounds(hpChange.getFormattedRelative(), graphics);
+      graphics.drawString(
+          hpChange.getFormattedRelative(),
+          width - borderSize - (int) changeBounds.getWidth(),
+          (int) (titleHeight + plateHeight / 2f + changeBounds.getHeight() / 2));
     }
 
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
@@ -121,8 +165,6 @@ public class OtherTheme extends BaseTheme {
       }
     }
 
-    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
-    FontMetrics fontMetrics = graphics.getFontMetrics();
     Rectangle2D healthBounds = fontMetrics.getStringBounds(healthString, graphics);
 
     graphics.setColor(Color.WHITE);

@@ -53,6 +53,14 @@ public interface NameplatesConfig extends Config {
     return false;
   }
 
+  @ConfigItem(
+      keyName = "drawConsumableHealAmount",
+      name = "Draw consumable heal amount",
+      description = "If enabled, draws how much the hovered consumable will heal/damage you for")
+  default boolean drawConsumableHealAmount() {
+    return true;
+  }
+
   // consumable healing indicator (display that hp will go up by 20 if you eat a shark, etc)
   // poison damage indicator
 

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Constants;
 import net.runelite.api.GameState;
 import net.runelite.api.IndexedObjectSet;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.Prayer;
@@ -35,6 +37,8 @@ import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.events.PlayerSpawned;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -43,6 +47,10 @@ import net.runelite.client.hiscore.HiscoreClient;
 import net.runelite.client.hiscore.HiscoreEndpoint;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.itemstats.Effect;
+import net.runelite.client.plugins.itemstats.ItemStatChanges;
+import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.plugins.itemstats.stats.Stats;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 
@@ -60,6 +68,7 @@ public class NameplatesPlugin extends Plugin {
   @Getter @Inject private NameplatesConfig config;
   @Inject private OverlayManager overlayManager;
   @Inject private NameplatesOverlay nameplatesOverlay;
+  @Inject private ItemStatChanges statChanges;
   @Getter @Inject private NPCManager npcManager;
   @Getter @Inject private HiscoreClient hiscoreClient;
 
@@ -469,6 +478,35 @@ public class NameplatesPlugin extends Plugin {
 
   public boolean isAnyPrayerActive() {
     return Arrays.stream(Prayer.values()).anyMatch(p -> client.isPrayerActive(p));
+  }
+
+  public StatChange getHoveredItemHpChange() {
+    if (client.isMenuOpen()) {
+      return null;
+    }
+
+    final MenuEntry[] menu = client.getMenuEntries();
+    final int menuSize = menu.length;
+    if (menuSize == 0) {
+      return null;
+    }
+
+    final MenuEntry entry = menu[menuSize - 1];
+    final Widget widget = entry.getWidget();
+    if (widget == null || widget.getId() != ComponentID.INVENTORY_CONTAINER) {
+      return null;
+    }
+
+    final Effect change = statChanges.get(widget.getItemId());
+    if (change == null) {
+      return null;
+    }
+
+    Optional<StatChange> hpChange =
+        Arrays.stream(change.calculate(client).getStatChanges())
+            .filter(c -> c.getStat() == Stats.HITPOINTS)
+            .findFirst();
+    return hpChange.orElse(null);
   }
 
   @Provides
