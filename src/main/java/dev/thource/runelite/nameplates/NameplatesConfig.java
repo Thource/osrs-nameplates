@@ -61,7 +61,14 @@ public interface NameplatesConfig extends Config {
     return true;
   }
 
-  // consumable healing indicator (display that hp will go up by 20 if you eat a shark, etc)
+  @ConfigItem(
+      keyName = "drawPoisonDamageIndicator",
+      name = "Draw poison damage indicator",
+      description = "If enabled, draws the poison damage indicator")
+  default boolean drawPoisonDamageIndicator() {
+    return true;
+  }
+
   // poison damage indicator
 
   // draw nameplates for players

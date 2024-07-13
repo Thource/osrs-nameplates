@@ -5,6 +5,7 @@ import dev.thource.runelite.nameplates.themes.Themes;
 import java.awt.image.BufferedImage;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -189,6 +190,7 @@ public class NameplatesPlugin extends Plugin {
   @Getter private HiscoreEndpoint hiscoreEndpoint = HiscoreEndpoint.NORMAL;
   private Instant startOfLastTick = Instant.now();
   private int ticksSinceHPRegen;
+  @Getter private Instant nextPoisonTick;
 
   private void overrideSprites() {
     Map<Integer, SpritePixels> overrides = client.getSpriteOverrides();
@@ -416,7 +418,10 @@ public class NameplatesPlugin extends Plugin {
 
   @Subscribe
   private void onVarbitChanged(VarbitChanged varbitChanged) {
-    if (varbitChanged.getVarbitId() == Varbits.PRAYER_RAPID_HEAL) {
+    if (varbitChanged.getVarpId() == VarPlayer.POISON) {
+      nextPoisonTick =
+          Instant.now().plus(Duration.of(PoisonStatus.POISON_TICK_MILLIS, ChronoUnit.MILLIS));
+    } else if (varbitChanged.getVarbitId() == Varbits.PRAYER_RAPID_HEAL) {
       ticksSinceHPRegen = 0;
     }
   }
@@ -507,6 +512,16 @@ public class NameplatesPlugin extends Plugin {
             .filter(c -> c.getStat() == Stats.HITPOINTS)
             .findFirst();
     return hpChange.orElse(null);
+  }
+
+  public PoisonStatus getPoisonStatus() {
+    final int poisonValue = client.getVarpValue(VarPlayer.POISON);
+
+    if (poisonValue > 0) {
+      return new PoisonStatus(poisonValue);
+    }
+
+    return null;
   }
 
   @Provides

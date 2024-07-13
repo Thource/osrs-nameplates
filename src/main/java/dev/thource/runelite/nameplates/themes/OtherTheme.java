@@ -2,12 +2,15 @@ package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
 import dev.thource.runelite.nameplates.NameplateHeadIcon;
+import dev.thource.runelite.nameplates.PoisonStatus;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
+import java.time.Instant;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
@@ -89,12 +92,37 @@ public class OtherTheme extends BaseTheme {
     int fullBarWidth = (width - borderSize * 2);
     int barWidth = (int) (fullBarWidth * Math.min(1, nameplate.getHealthPercentage()));
     int barHeight = plateHeight - borderSize * 2;
+    boolean isLocalPlayer = nameplate.getActor() == plugin.getClient().getLocalPlayer();
+    PoisonStatus poisonStatus = null;
 
-    graphics.setColor(new Color(120, 50, 40));
+    Color barColor = new Color(120, 50, 40);
+    if (isLocalPlayer) {
+      poisonStatus = plugin.getPoisonStatus();
+      if (poisonStatus != null) {
+        if (poisonStatus.isVenom()) {
+          barColor = new Color(50, 100, 80);
+        } else {
+          barColor = new Color(50, 120, 40);
+        }
+      }
+    }
+    graphics.setColor(barColor);
     graphics.fillRect(borderSize, titleHeight + borderSize, barWidth, barHeight);
 
+    if (isLocalPlayer && poisonStatus != null) {
+      int nextPoisonDamage = Math.min(nameplate.getCurrentHealth(), poisonStatus.getDamage());
+      int changeWidth =
+          (int) (fullBarWidth * ((float) nextPoisonDamage / nameplate.getMaxHealth()));
+      Color changeColor = new Color(30, 80, 20);
+      if (poisonStatus.isVenom()) {
+        changeColor = new Color(30, 60, 50);
+      }
+      graphics.setColor(changeColor);
+      graphics.fillRect(borderSize + barWidth - changeWidth, barTopY, changeWidth, barHeight);
+    }
+
     StatChange hpChange = null;
-    if (plugin.getConfig().drawConsumableHealAmount()) {
+    if (isLocalPlayer && plugin.getConfig().drawConsumableHealAmount()) {
       hpChange = plugin.getHoveredItemHpChange();
     }
 
@@ -116,8 +144,7 @@ public class OtherTheme extends BaseTheme {
           borderSize + barWidth + changeOffset, titleHeight + borderSize, changeWidth, barHeight);
     }
 
-    if (plugin.getConfig().drawHpRegenIndicator()
-        && nameplate.getActor() == plugin.getClient().getLocalPlayer()) {
+    if (plugin.getConfig().drawHpRegenIndicator() && isLocalPlayer) {
       double indicatorProgress = plugin.getHpRegenProgress();
       if (indicatorProgress > 0) {
         if (nameplate.getHealthPercentage() > 1) {
@@ -128,6 +155,16 @@ public class OtherTheme extends BaseTheme {
         graphics.setColor(Color.LIGHT_GRAY);
         graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
       }
+    }
+
+    if (plugin.getConfig().drawPoisonDamageIndicator() && isLocalPlayer && poisonStatus != null) {
+      double indicatorProgress =
+          (double) Duration.between(Instant.now(), plugin.getNextPoisonTick()).toMillis()
+              / PoisonStatus.POISON_TICK_MILLIS;
+      int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
+
+      graphics.setColor(Color.RED);
+      graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
     }
 
     graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
@@ -198,7 +235,11 @@ public class OtherTheme extends BaseTheme {
     int barTopY = titleHeight + plateHeight + borderSize;
     int barHeight = plateHeight - borderSize * 2;
 
-    graphics.setColor(new Color(20, 120, 110));
+    Color barColor = new Color(20, 120, 110);
+    if (plugin.isAnyPrayerActive()) {
+      barColor = new Color(30, 180, 160);
+    }
+    graphics.setColor(barColor);
     graphics.fillRect(
         borderSize,
         barTopY,
