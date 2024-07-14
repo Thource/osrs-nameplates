@@ -111,10 +111,6 @@ public class NameplatesOverlay extends Overlay {
   }
 
   private BaseTheme getTheme(Actor actor) {
-    if (actor.getCombatLevel() != 9) {
-      return Themes.OTHER.getTheme();
-    }
-
     return Themes.OTHER.getTheme();
   }
 

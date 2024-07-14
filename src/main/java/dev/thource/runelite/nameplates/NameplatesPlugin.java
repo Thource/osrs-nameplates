@@ -485,32 +485,50 @@ public class NameplatesPlugin extends Plugin {
     return Arrays.stream(Prayer.values()).anyMatch(p -> client.isPrayerActive(p));
   }
 
-  public StatChange getHoveredItemHpChange() {
+  private StatChange[] getHoveredItemStatChanges() {
     if (client.isMenuOpen()) {
-      return null;
+      return new StatChange[0];
     }
 
     final MenuEntry[] menu = client.getMenuEntries();
     final int menuSize = menu.length;
     if (menuSize == 0) {
-      return null;
+      return new StatChange[0];
     }
 
     final MenuEntry entry = menu[menuSize - 1];
     final Widget widget = entry.getWidget();
     if (widget == null || widget.getId() != ComponentID.INVENTORY_CONTAINER) {
-      return null;
+      return new StatChange[0];
     }
 
     final Effect change = statChanges.get(widget.getItemId());
     if (change == null) {
+      return new StatChange[0];
+    }
+
+    return change.calculate(client).getStatChanges();
+  }
+
+  public StatChange getHoveredItemHpChange() {
+    StatChange[] changes = getHoveredItemStatChanges();
+    if (changes.length == 0) {
       return null;
     }
 
     Optional<StatChange> hpChange =
-        Arrays.stream(change.calculate(client).getStatChanges())
-            .filter(c -> c.getStat() == Stats.HITPOINTS)
-            .findFirst();
+        Arrays.stream(changes).filter(c -> c.getStat() == Stats.HITPOINTS).findFirst();
+    return hpChange.orElse(null);
+  }
+
+  public StatChange getHoveredItemPrayerChange() {
+    StatChange[] changes = getHoveredItemStatChanges();
+    if (changes.length == 0) {
+      return null;
+    }
+
+    Optional<StatChange> hpChange =
+        Arrays.stream(changes).filter(c -> c.getStat() == Stats.PRAYER).findFirst();
     return hpChange.orElse(null);
   }
 

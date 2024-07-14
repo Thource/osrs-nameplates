@@ -1,11 +1,14 @@
 package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
+import dev.thource.runelite.nameplates.PoisonStatus;
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import net.runelite.api.Point;
 import net.runelite.api.SpriteID;
 import net.runelite.api.SpritePixels;
+import net.runelite.client.plugins.itemstats.StatChange;
 
 public class OsrsTheme extends BaseTheme {
   @Override
@@ -29,31 +32,132 @@ public class OsrsTheme extends BaseTheme {
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
 
   @Override
-  protected void drawHealthBar(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    int frontWidth = (int) (width * nameplate.getHealthPercentage());
+  protected void drawPrayerBarText(
+      Graphics2D graphics,
+      int width,
+      int currentPrayer,
+      int maxPrayer,
+      FontMetrics fontMetrics,
+      int barTopY,
+      int barHeight) {}
+
+  @Override
+  protected void drawPrayerBarFlickIndicator(
+      Graphics2D graphics, int borderSize, int fullBarWidth, int barTopY, int barHeight) {}
+
+  @Override
+  protected void drawPrayerBarBar(
+      Graphics2D graphics, int borderSize, int barTopY, int barWidth, int barHeight) {}
+
+  @Override
+  protected int getTitleHeight(float scale) {
+    return 0;
+  }
+
+  @Override
+  protected int getPlateHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+    return 7;
+  }
+
+  @Override
+  protected void drawHealthBarBar(
+      Graphics2D graphics,
+      boolean isLocalPlayer,
+      PoisonStatus poisonStatus,
+      int borderSize,
+      int barTopY,
+      int barWidth,
+      int barHeight,
+      Nameplate nameplate) {
     SpritePixels healthbarFrontSprite = getHealthbarFrontSprite(nameplate.getHealthScale());
     if (healthbarFrontSprite != null) {
       graphics.drawImage(
           healthbarFrontSprite.toBufferedImage(),
           0,
           0,
-          frontWidth,
-          height,
+          barWidth,
+          barHeight,
           0,
           0,
-          frontWidth,
-          height,
+          barWidth,
+          barHeight,
           null);
     } else {
       graphics.setColor(Color.GREEN);
-      graphics.fillRect(0, 0, frontWidth, height);
+      graphics.fillRect(0, 0, barWidth, barHeight);
     }
   }
 
   @Override
+  protected void drawHealthBarText(
+      Graphics2D graphics,
+      int width,
+      float scale,
+      Nameplate nameplate,
+      FontMetrics fontMetrics,
+      int borderSize,
+      int titleHeight,
+      int plateHeight) {}
+
+  @Override
+  protected void drawConsumableChangeText(
+      Graphics2D graphics,
+      int width,
+      StatChange hpChange,
+      FontMetrics fontMetrics,
+      int borderSize,
+      int barTopY,
+      int barHeight) {}
+
+  @Override
+  protected void drawHealthBarPoisonIndicator(
+      Graphics2D graphics, int borderSize, int fullBarWidth, int barTopY, int barHeight) {}
+
+  @Override
+  protected void drawHealthBarRegenIndicator(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      int borderSize,
+      int fullBarWidth,
+      int barTopY,
+      int barHeight) {}
+
+  @Override
+  protected void drawHealthBarConsumableChange(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      StatChange change,
+      int fullBarWidth,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {}
+
+  @Override
+  protected void drawHealthBarPoisonChange(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      PoisonStatus poisonStatus,
+      int fullBarWidth,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {}
+
+  @Override
   protected void drawPrayerBar(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
+
+  @Override
+  protected void drawPrayerBarConsumableChange(
+      Graphics2D graphics,
+      int fullBarWidth,
+      StatChange prayerChange,
+      int maxPrayer,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {}
 
   @Override
   protected void drawOverheads(

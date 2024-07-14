@@ -13,8 +13,8 @@ import java.time.Duration;
 import java.time.Instant;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
-import net.runelite.api.Skill;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.plugins.itemstats.stats.Stats;
 import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
@@ -44,7 +44,7 @@ public class OtherTheme extends BaseTheme {
   @Override
   protected void drawName(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (plugin.getConfig().drawNameInHealthBar()) {
+    if (plugin.getConfig().drawNameInHealthBar() && nameplate.getMaxHealth() > 0) {
       return;
     }
 
@@ -83,112 +83,42 @@ public class OtherTheme extends BaseTheme {
   }
 
   @Override
-  protected void drawHealthBar(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    int borderSize = (int) Math.ceil(scale);
-    int titleHeight = getTitleHeight(scale);
-    int plateHeight = getPlateHeight(graphics, scale, nameplate);
-    int barTopY = titleHeight + borderSize;
-    int fullBarWidth = (width - borderSize * 2);
-    int barWidth = (int) (fullBarWidth * Math.min(1, nameplate.getHealthPercentage()));
-    int barHeight = plateHeight - borderSize * 2;
-    boolean isLocalPlayer = nameplate.getActor() == plugin.getClient().getLocalPlayer();
-    PoisonStatus poisonStatus = null;
+  protected int getBorderSize(double scale) {
+    return (int) Math.ceil(scale);
+  }
 
+  @Override
+  protected void drawHealthBarBar(
+      Graphics2D graphics,
+      boolean isLocalPlayer,
+      PoisonStatus poisonStatus,
+      int borderSize,
+      int barTopY,
+      int barWidth,
+      int barHeight,
+      Nameplate nameplate) {
     Color barColor = new Color(120, 50, 40);
-    if (isLocalPlayer) {
-      poisonStatus = plugin.getPoisonStatus();
-      if (poisonStatus != null) {
-        if (poisonStatus.isVenom()) {
-          barColor = new Color(50, 100, 80);
-        } else {
-          barColor = new Color(50, 120, 40);
-        }
+    if (isLocalPlayer && poisonStatus != null) {
+      if (poisonStatus.isVenom()) {
+        barColor = new Color(50, 100, 80);
+      } else {
+        barColor = new Color(50, 120, 40);
       }
     }
     graphics.setColor(barColor);
-    graphics.fillRect(borderSize, titleHeight + borderSize, barWidth, barHeight);
+    graphics.fillRect(borderSize, barTopY, barWidth, barHeight);
+  }
 
-    if (isLocalPlayer && poisonStatus != null) {
-      int nextPoisonDamage = Math.min(nameplate.getCurrentHealth(), poisonStatus.getDamage());
-      int changeWidth =
-          (int) (fullBarWidth * ((float) nextPoisonDamage / nameplate.getMaxHealth()));
-      Color changeColor = new Color(30, 80, 20);
-      if (poisonStatus.isVenom()) {
-        changeColor = new Color(30, 60, 50);
-      }
-      graphics.setColor(changeColor);
-      graphics.fillRect(borderSize + barWidth - changeWidth, barTopY, changeWidth, barHeight);
-    }
-
-    StatChange hpChange = null;
-    if (isLocalPlayer && plugin.getConfig().drawConsumableHealAmount()) {
-      hpChange = plugin.getHoveredItemHpChange();
-    }
-
-    if (hpChange != null && hpChange.getRelative() != 0) {
-      Color changeColor = new Color(80, 30, 20);
-      if (hpChange.getRelative() > 0 && hpChange.getRelative() != hpChange.getTheoretical()) {
-        changeColor = new Color(100, 80, 0);
-      }
-      graphics.setColor(changeColor);
-
-      int changeWidth =
-          (int) (fullBarWidth * ((float) hpChange.getRelative() / nameplate.getMaxHealth()));
-      int changeOffset = 0;
-      if (changeWidth < 0) {
-        changeOffset = changeWidth;
-        changeWidth = -changeWidth;
-      }
-      graphics.fillRect(
-          borderSize + barWidth + changeOffset, titleHeight + borderSize, changeWidth, barHeight);
-    }
-
-    if (plugin.getConfig().drawHpRegenIndicator() && isLocalPlayer) {
-      double indicatorProgress = plugin.getHpRegenProgress();
-      if (indicatorProgress > 0) {
-        if (nameplate.getHealthPercentage() > 1) {
-          indicatorProgress = Math.max(0, 1 - indicatorProgress);
-        }
-        int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
-
-        graphics.setColor(Color.LIGHT_GRAY);
-        graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
-      }
-    }
-
-    if (plugin.getConfig().drawPoisonDamageIndicator() && isLocalPlayer && poisonStatus != null) {
-      double indicatorProgress =
-          (double) Duration.between(Instant.now(), plugin.getNextPoisonTick()).toMillis()
-              / PoisonStatus.POISON_TICK_MILLIS;
-      int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
-
-      graphics.setColor(Color.RED);
-      graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
-    }
-
-    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
-    FontMetrics fontMetrics = graphics.getFontMetrics();
-
-    if (hpChange != null && hpChange.getRelative() != 0) {
-      Color changeColor = new Color(60, 200, 40);
-      if (hpChange.getRelative() > 0) {
-        if (hpChange.getRelative() != hpChange.getTheoretical()) {
-          changeColor = new Color(200, 200, 60);
-        }
-      } else {
-        changeColor = new Color(200, 50, 50);
-      }
-      graphics.setColor(changeColor);
-
-      Rectangle2D changeBounds =
-          fontMetrics.getStringBounds(hpChange.getFormattedRelative(), graphics);
-      graphics.drawString(
-          hpChange.getFormattedRelative(),
-          width - borderSize - (int) changeBounds.getWidth(),
-          (int) (titleHeight + plateHeight / 2f + changeBounds.getHeight() / 2));
-    }
-
+  @Override
+  protected void drawHealthBarText(
+      Graphics2D graphics,
+      int width,
+      float scale,
+      Nameplate nameplate,
+      FontMetrics fontMetrics,
+      int borderSize,
+      int barTopY,
+      int barHeight) {
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
     HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
     if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
@@ -209,53 +139,158 @@ public class OtherTheme extends BaseTheme {
       Rectangle2D nameBounds = fontMetrics.getStringBounds(nameplate.getName(), graphics);
       graphics.drawString(
           nameplate.getName(),
-          borderSize + 2 * scale,
-          (int) (titleHeight + plateHeight / 2f + nameBounds.getHeight() / 2));
+          borderSize * 3,
+          (int) (barTopY + barHeight / 2f + nameBounds.getHeight() / 2));
       graphics.drawString(
           healthString,
-          width - borderSize - 2 - (int) healthBounds.getWidth(),
-          (int) (titleHeight + plateHeight / 2f + healthBounds.getHeight() / 2));
+          width - borderSize * 3 - (int) healthBounds.getWidth(),
+          (int) (barTopY + barHeight / 2f + healthBounds.getHeight() / 2));
     } else {
       graphics.drawString(
           healthString,
           width / 2 - (int) healthBounds.getWidth() / 2,
-          (int) (titleHeight + plateHeight / 2f + healthBounds.getHeight() / 2));
+          (int) (barTopY + barHeight / 2f + healthBounds.getHeight() / 2));
     }
   }
 
   @Override
-  protected void drawPrayerBar(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    int borderSize = (int) Math.ceil(scale);
-    int titleHeight = getTitleHeight(scale);
-    int plateHeight = getPlateHeight(graphics, scale, nameplate);
-    int currentPrayer = plugin.getClient().getBoostedSkillLevel(Skill.PRAYER);
-    int maxPrayer = plugin.getClient().getRealSkillLevel(Skill.PRAYER);
-    float prayerPercentage = (float) currentPrayer / maxPrayer;
-    int barTopY = titleHeight + plateHeight + borderSize;
-    int barHeight = plateHeight - borderSize * 2;
-
-    Color barColor = new Color(20, 120, 110);
-    if (plugin.isAnyPrayerActive()) {
-      barColor = new Color(30, 180, 160);
+  protected void drawConsumableChangeText(
+      Graphics2D graphics,
+      int width,
+      StatChange change,
+      FontMetrics fontMetrics,
+      int borderSize,
+      int barTopY,
+      int barHeight) {
+    if (plugin.getConfig().drawNameInHealthBar() && change.getStat() == Stats.HITPOINTS) {
+      return;
     }
-    graphics.setColor(barColor);
-    graphics.fillRect(
-        borderSize,
-        barTopY,
-        (int) ((width - borderSize * 2) * Math.min(1, prayerPercentage)),
-        barHeight);
 
-    if (plugin.getConfig().drawPrayerFlickIndicator() && plugin.isAnyPrayerActive()) {
-      double indicatorProgress = Math.max(0, 1 - plugin.getTickProgress());
-      int indicatorX = (int) (borderSize + (width - borderSize * 2) * indicatorProgress);
+    Color changeColor = new Color(60, 200, 40);
+    if (change.getRelative() > 0) {
+      if (change.getRelative() != change.getTheoretical()) {
+        changeColor = new Color(200, 200, 60);
+      }
+    } else {
+      changeColor = new Color(200, 50, 50);
+    }
+    graphics.setColor(changeColor);
+
+    Rectangle2D changeBounds = fontMetrics.getStringBounds(change.getFormattedRelative(), graphics);
+    graphics.drawString(
+        change.getFormattedRelative(),
+        width - borderSize * 3 - (int) changeBounds.getWidth(),
+        (int) (barTopY + barHeight * 0.5f + changeBounds.getHeight() / 2));
+  }
+
+  @Override
+  protected void drawHealthBarPoisonIndicator(
+      Graphics2D graphics, int borderSize, int fullBarWidth, int barTopY, int barHeight) {
+    double indicatorProgress =
+        (double) Duration.between(Instant.now(), plugin.getNextPoisonTick()).toMillis()
+            / PoisonStatus.POISON_TICK_MILLIS;
+    int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
+
+    graphics.setColor(Color.RED);
+    graphics.fillRect(indicatorX, barTopY, 1, barHeight);
+  }
+
+  @Override
+  protected void drawHealthBarRegenIndicator(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      int borderSize,
+      int fullBarWidth,
+      int barTopY,
+      int barHeight) {
+    double indicatorProgress = plugin.getHpRegenProgress();
+    if (indicatorProgress > 0) {
+      if (nameplate.getHealthPercentage() > 1) {
+        indicatorProgress = Math.max(0, 1 - indicatorProgress);
+      }
+      int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
 
       graphics.setColor(Color.LIGHT_GRAY);
-      graphics.drawLine(indicatorX, barTopY, indicatorX, barTopY + barHeight);
+      graphics.fillRect(indicatorX, barTopY, 1, barHeight);
     }
+  }
 
-    graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
-    FontMetrics fontMetrics = graphics.getFontMetrics();
+  @Override
+  protected void drawHealthBarConsumableChange(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      StatChange change,
+      int fullBarWidth,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {
+    Color changeColor = new Color(80, 30, 20);
+    if (change.getRelative() > 0 && change.getRelative() != change.getTheoretical()) {
+      changeColor = new Color(100, 80, 0);
+    }
+    graphics.setColor(changeColor);
+
+    int changeWidth =
+        (int) (fullBarWidth * ((float) change.getRelative() / nameplate.getMaxHealth()));
+    int changeOffset = 0;
+    if (changeWidth < 0) {
+      changeOffset = changeWidth;
+      changeWidth = -changeWidth;
+    }
+    graphics.fillRect(borderSize + barWidth + changeOffset, barTopY, changeWidth, barHeight);
+  }
+
+  @Override
+  protected void drawHealthBarPoisonChange(
+      Graphics2D graphics,
+      Nameplate nameplate,
+      PoisonStatus poisonStatus,
+      int fullBarWidth,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {
+    int nextPoisonDamage = Math.min(nameplate.getCurrentHealth(), poisonStatus.getDamage());
+    int changeWidth = (int) (fullBarWidth * ((float) nextPoisonDamage / nameplate.getMaxHealth()));
+    Color changeColor = new Color(30, 80, 20);
+    if (poisonStatus.isVenom()) {
+      changeColor = new Color(30, 60, 50);
+    }
+    graphics.setColor(changeColor);
+    graphics.fillRect(borderSize + barWidth - changeWidth, barTopY, changeWidth, barHeight);
+  }
+
+  @Override
+  protected void drawPrayerBarConsumableChange(
+      Graphics2D graphics,
+      int fullBarWidth,
+      StatChange prayerChange,
+      int maxPrayer,
+      int borderSize,
+      int barWidth,
+      int barTopY,
+      int barHeight) {
+    graphics.setColor(new Color(20, 90, 80));
+
+    int changeWidth = (int) (fullBarWidth * ((float) prayerChange.getRelative() / maxPrayer));
+    int changeOffset = 0;
+    if (changeWidth < 0) {
+      changeOffset = changeWidth;
+      changeWidth = -changeWidth;
+    }
+    graphics.fillRect(borderSize + barWidth + changeOffset, barTopY, changeWidth, barHeight);
+  }
+
+  @Override
+  protected void drawPrayerBarText(
+      Graphics2D graphics,
+      int width,
+      int currentPrayer,
+      int maxPrayer,
+      FontMetrics fontMetrics,
+      int barTopY,
+      int barHeight) {
     String prayerString = currentPrayer + " / " + maxPrayer;
     Rectangle2D bounds = fontMetrics.getStringBounds(prayerString, graphics);
 
@@ -266,7 +301,29 @@ public class OtherTheme extends BaseTheme {
         (int) (barTopY + barHeight * 0.5f + bounds.getHeight() / 2));
   }
 
-  private int getTitleHeight(float scale) {
+  @Override
+  protected void drawPrayerBarFlickIndicator(
+      Graphics2D graphics, int borderSize, int fullBarWidth, int barTopY, int barHeight) {
+    double indicatorProgress = Math.max(0, 1 - plugin.getTickProgress());
+    int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
+
+    graphics.setColor(Color.BLUE);
+    graphics.fillRect(indicatorX, barTopY, 1, barHeight);
+  }
+
+  @Override
+  protected void drawPrayerBarBar(
+      Graphics2D graphics, int borderSize, int barTopY, int barWidth, int barHeight) {
+    Color barColor = new Color(20, 120, 110);
+    if (plugin.isAnyPrayerActive()) {
+      barColor = new Color(30, 180, 160);
+    }
+    graphics.setColor(barColor);
+    graphics.fillRect(borderSize, barTopY, barWidth, barHeight);
+  }
+
+  @Override
+  protected int getTitleHeight(float scale) {
     if (plugin.getConfig().drawNameInHealthBar()) {
       return 0;
     }
@@ -274,7 +331,8 @@ public class OtherTheme extends BaseTheme {
     return (int) Math.floor(TITLE_HEIGHT * scale);
   }
 
-  private int getPlateHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
+  @Override
+  protected int getPlateHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
     int plateHeight = getHeight(graphics, scale, nameplate) - getTitleHeight(scale);
 
     if (shouldDrawPrayerBar(nameplate.getActor())) {
