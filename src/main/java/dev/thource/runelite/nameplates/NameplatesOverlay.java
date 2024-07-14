@@ -111,7 +111,7 @@ public class NameplatesOverlay extends Overlay {
   }
 
   private BaseTheme getTheme(Actor actor) {
-    return Themes.OTHER.getTheme();
+    return Themes.DEFAULT.getTheme();
   }
 
   public boolean shouldDrawFor(Actor actor) {

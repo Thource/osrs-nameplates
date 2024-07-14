@@ -32,6 +32,10 @@ public class OsrsTheme extends BaseTheme {
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {}
 
   @Override
+  protected void drawBarBackground(
+      Graphics2D graphics, int barLeftX, int barTopY, int fullBarWidth, int barHeight) {}
+
+  @Override
   protected void drawPrayerBarText(
       Graphics2D graphics,
       int width,

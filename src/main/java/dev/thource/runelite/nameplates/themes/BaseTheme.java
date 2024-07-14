@@ -1,13 +1,13 @@
 package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
+import dev.thource.runelite.nameplates.NameplatesConfig;
 import dev.thource.runelite.nameplates.NameplatesPlugin;
 import dev.thource.runelite.nameplates.PoisonStatus;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import lombok.Setter;
 import net.runelite.api.Actor;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
@@ -15,7 +15,13 @@ import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.ui.FontManager;
 
 public abstract class BaseTheme {
-  @Setter protected NameplatesPlugin plugin;
+  protected NameplatesPlugin plugin;
+  protected NameplatesConfig config;
+
+  public void setPlugin(NameplatesPlugin plugin) {
+    this.plugin = plugin;
+    config = plugin.getConfig();
+  }
 
   protected abstract void drawBasePlate(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate);
@@ -41,6 +47,7 @@ public abstract class BaseTheme {
       poisonStatus = plugin.getPoisonStatus();
     }
 
+    drawBarBackground(graphics, borderSize, barTopY, fullBarWidth, barHeight);
     drawHealthBarBar(
         graphics, isLocalPlayer, poisonStatus, borderSize, barTopY, barWidth, barHeight, nameplate);
 
@@ -57,7 +64,7 @@ public abstract class BaseTheme {
     }
 
     StatChange hpChange = null;
-    if (isLocalPlayer && plugin.getConfig().drawConsumableHealAmount()) {
+    if (isLocalPlayer && config.drawConsumableHealAmount()) {
       hpChange = plugin.getHoveredItemHpChange();
     }
     if (hpChange != null && hpChange.getRelative() != 0) {
@@ -65,12 +72,12 @@ public abstract class BaseTheme {
           graphics, nameplate, hpChange, fullBarWidth, borderSize, barWidth, barTopY, barHeight);
     }
 
-    if (plugin.getConfig().drawHpRegenIndicator() && isLocalPlayer) {
+    if (config.drawHpRegenIndicator() && isLocalPlayer) {
       drawHealthBarRegenIndicator(
           graphics, nameplate, borderSize, fullBarWidth, barTopY, barHeight);
     }
 
-    if (plugin.getConfig().drawPoisonDamageIndicator() && isLocalPlayer && poisonStatus != null) {
+    if (config.drawPoisonDamageIndicator() && isLocalPlayer && poisonStatus != null) {
       drawHealthBarPoisonIndicator(graphics, borderSize, fullBarWidth, barTopY, barHeight);
     }
 
@@ -85,6 +92,9 @@ public abstract class BaseTheme {
     drawHealthBarText(
         graphics, width, scale, nameplate, fontMetrics, borderSize, barTopY, barHeight);
   }
+
+  protected abstract void drawBarBackground(
+      Graphics2D graphics, int barLeftX, int barTopY, int fullBarWidth, int barHeight);
 
   protected int getBorderSize(double scale) {
     return 0;
@@ -182,10 +192,11 @@ public abstract class BaseTheme {
     int barWidth = (int) (fullBarWidth * Math.min(1, prayerPercentage));
     int barHeight = plateHeight - borderSize * 2;
 
+    drawBarBackground(graphics, borderSize, barTopY, fullBarWidth, barHeight);
     drawPrayerBarBar(graphics, borderSize, barTopY, barWidth, barHeight);
 
     StatChange prayerChange = null;
-    if (plugin.getConfig().drawConsumableHealAmount()) {
+    if (config.drawConsumableHealAmount()) {
       prayerChange = plugin.getHoveredItemPrayerChange();
     }
 
@@ -201,7 +212,7 @@ public abstract class BaseTheme {
           barHeight);
     }
 
-    if (plugin.getConfig().drawPrayerFlickIndicator() && plugin.isAnyPrayerActive()) {
+    if (config.drawPrayerFlickIndicator() && plugin.isAnyPrayerActive()) {
       drawPrayerBarFlickIndicator(graphics, borderSize, fullBarWidth, barTopY, barHeight);
     }
 
@@ -321,6 +332,6 @@ public abstract class BaseTheme {
   }
 
   protected boolean shouldDrawPrayerBar(Actor actor) {
-    return plugin.getClient().getLocalPlayer() == actor && plugin.getConfig().drawPrayerBar();
+    return plugin.getClient().getLocalPlayer() == actor && config.drawPrayerBar();
   }
 }

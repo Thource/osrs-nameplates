@@ -18,7 +18,7 @@ import net.runelite.client.plugins.itemstats.stats.Stats;
 import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
-public class OtherTheme extends BaseTheme {
+public class DefaultTheme extends BaseTheme {
   private static final int TITLE_HEIGHT = 10;
   private static final int PLATE_HEIGHT = 14;
 
@@ -37,14 +37,14 @@ public class OtherTheme extends BaseTheme {
       plateHeight *= 2;
     }
 
-    graphics.setColor(new Color(0.1f, 0.1f, 0.1f));
+    graphics.setColor(config.themeDefaultColorBorder());
     graphics.fillRect(0, getTitleHeight(scale), width, plateHeight);
   }
 
   @Override
   protected void drawName(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (plugin.getConfig().drawNameInHealthBar() && nameplate.getMaxHealth() > 0) {
+    if (config.themeDefaultDrawNameInHealthBar() && nameplate.getMaxHealth() > 0) {
       return;
     }
 
@@ -60,7 +60,7 @@ public class OtherTheme extends BaseTheme {
   @Override
   protected void drawCombatLevel(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (plugin.getConfig().drawNameInHealthBar()) {
+    if (config.themeDefaultDrawNameInHealthBar()) {
       // TODO: figure out where to draw combat level
       return;
     }
@@ -83,6 +83,13 @@ public class OtherTheme extends BaseTheme {
   }
 
   @Override
+  protected void drawBarBackground(
+      Graphics2D graphics, int barLeftX, int barTopY, int fullBarWidth, int barHeight) {
+    graphics.setColor(config.themeDefaultColorBarBackground());
+    graphics.fillRect(barLeftX, barTopY, fullBarWidth, barHeight);
+  }
+
+  @Override
   protected int getBorderSize(double scale) {
     return (int) Math.ceil(scale);
   }
@@ -97,12 +104,12 @@ public class OtherTheme extends BaseTheme {
       int barWidth,
       int barHeight,
       Nameplate nameplate) {
-    Color barColor = new Color(120, 50, 40);
+    Color barColor = config.themeDefaultColorHealthBarFill();
     if (isLocalPlayer && poisonStatus != null) {
       if (poisonStatus.isVenom()) {
-        barColor = new Color(50, 100, 80);
+        barColor = config.themeDefaultColorHealthBarFillVenom();
       } else {
-        barColor = new Color(50, 120, 40);
+        barColor = config.themeDefaultColorHealthBarFillPoison();
       }
     }
     graphics.setColor(barColor);
@@ -120,7 +127,7 @@ public class OtherTheme extends BaseTheme {
       int barTopY,
       int barHeight) {
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
-    HitpointsDisplayStyle displayStyle = plugin.getConfig().hitpointsDisplayStyle();
+    HitpointsDisplayStyle displayStyle = config.hitpointsDisplayStyle();
     if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
       double percentage =
           Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
@@ -135,7 +142,7 @@ public class OtherTheme extends BaseTheme {
     Rectangle2D healthBounds = fontMetrics.getStringBounds(healthString, graphics);
 
     graphics.setColor(Color.WHITE);
-    if (plugin.getConfig().drawNameInHealthBar()) {
+    if (config.themeDefaultDrawNameInHealthBar()) {
       Rectangle2D nameBounds = fontMetrics.getStringBounds(nameplate.getName(), graphics);
       graphics.drawString(
           nameplate.getName(),
@@ -162,17 +169,17 @@ public class OtherTheme extends BaseTheme {
       int borderSize,
       int barTopY,
       int barHeight) {
-    if (plugin.getConfig().drawNameInHealthBar() && change.getStat() == Stats.HITPOINTS) {
+    if (config.themeDefaultDrawNameInHealthBar() && change.getStat() == Stats.HITPOINTS) {
       return;
     }
 
-    Color changeColor = new Color(60, 200, 40);
+    Color changeColor = config.themeDefaultColorConsumableTextPositive();
     if (change.getRelative() > 0) {
       if (change.getRelative() != change.getTheoretical()) {
-        changeColor = new Color(200, 200, 60);
+        changeColor = config.themeDefaultColorConsumableTextCapped();
       }
     } else {
-      changeColor = new Color(200, 50, 50);
+      changeColor = config.themeDefaultColorConsumableTextNegative();
     }
     graphics.setColor(changeColor);
 
@@ -191,7 +198,7 @@ public class OtherTheme extends BaseTheme {
             / PoisonStatus.POISON_TICK_MILLIS;
     int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
 
-    graphics.setColor(Color.RED);
+    graphics.setColor(config.themeDefaultColorPoisonDamageIndicator());
     graphics.fillRect(indicatorX, barTopY, 1, barHeight);
   }
 
@@ -210,7 +217,7 @@ public class OtherTheme extends BaseTheme {
       }
       int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
 
-      graphics.setColor(Color.LIGHT_GRAY);
+      graphics.setColor(config.themeDefaultColorHpRegenIndicator());
       graphics.fillRect(indicatorX, barTopY, 1, barHeight);
     }
   }
@@ -225,9 +232,11 @@ public class OtherTheme extends BaseTheme {
       int barWidth,
       int barTopY,
       int barHeight) {
-    Color changeColor = new Color(80, 30, 20);
-    if (change.getRelative() > 0 && change.getRelative() != change.getTheoretical()) {
-      changeColor = new Color(100, 80, 0);
+    Color changeColor = config.themeDefaultColorHealthBarPositiveChange();
+    if (change.getRelative() < 0) {
+      changeColor = config.themeDefaultColorHealthBarNegativeChange();
+    } else if (change.getRelative() != change.getTheoretical()) {
+      changeColor = config.themeDefaultColorHealthBarCappedChange();
     }
     graphics.setColor(changeColor);
 
@@ -253,9 +262,9 @@ public class OtherTheme extends BaseTheme {
       int barHeight) {
     int nextPoisonDamage = Math.min(nameplate.getCurrentHealth(), poisonStatus.getDamage());
     int changeWidth = (int) (fullBarWidth * ((float) nextPoisonDamage / nameplate.getMaxHealth()));
-    Color changeColor = new Color(30, 80, 20);
+    Color changeColor = config.themeDefaultColorHealthBarDamagePoison();
     if (poisonStatus.isVenom()) {
-      changeColor = new Color(30, 60, 50);
+      changeColor = config.themeDefaultColorHealthBarDamageVenom();
     }
     graphics.setColor(changeColor);
     graphics.fillRect(borderSize + barWidth - changeWidth, barTopY, changeWidth, barHeight);
@@ -271,7 +280,12 @@ public class OtherTheme extends BaseTheme {
       int barWidth,
       int barTopY,
       int barHeight) {
-    graphics.setColor(new Color(20, 90, 80));
+    Color changeColor = config.themeDefaultColorPrayerBarPositiveChange();
+    if (prayerChange.getRelative() < 0) {
+      changeColor = config.themeDefaultColorPrayerBarNegativeChange();
+    } else if (prayerChange.getRelative() != prayerChange.getTheoretical()) {
+      changeColor = config.themeDefaultColorPrayerBarCappedChange();
+    }
 
     int changeWidth = (int) (fullBarWidth * ((float) prayerChange.getRelative() / maxPrayer));
     int changeOffset = 0;
@@ -279,6 +293,7 @@ public class OtherTheme extends BaseTheme {
       changeOffset = changeWidth;
       changeWidth = -changeWidth;
     }
+    graphics.setColor(changeColor);
     graphics.fillRect(borderSize + barWidth + changeOffset, barTopY, changeWidth, barHeight);
   }
 
@@ -307,16 +322,16 @@ public class OtherTheme extends BaseTheme {
     double indicatorProgress = Math.max(0, 1 - plugin.getTickProgress());
     int indicatorX = (int) (borderSize + fullBarWidth * indicatorProgress);
 
-    graphics.setColor(Color.BLUE);
+    graphics.setColor(config.themeDefaultColorPrayerFlickIndicator());
     graphics.fillRect(indicatorX, barTopY, 1, barHeight);
   }
 
   @Override
   protected void drawPrayerBarBar(
       Graphics2D graphics, int borderSize, int barTopY, int barWidth, int barHeight) {
-    Color barColor = new Color(20, 120, 110);
+    Color barColor = config.themeDefaultColorPrayerBarFill();
     if (plugin.isAnyPrayerActive()) {
-      barColor = new Color(30, 180, 160);
+      barColor = config.themeDefaultColorPrayerBarFillActive();
     }
     graphics.setColor(barColor);
     graphics.fillRect(borderSize, barTopY, barWidth, barHeight);
@@ -324,7 +339,7 @@ public class OtherTheme extends BaseTheme {
 
   @Override
   protected int getTitleHeight(float scale) {
-    if (plugin.getConfig().drawNameInHealthBar()) {
+    if (config.themeDefaultDrawNameInHealthBar()) {
       return 0;
     }
 
@@ -386,7 +401,7 @@ public class OtherTheme extends BaseTheme {
     }
 
     int height = PLATE_HEIGHT;
-    if (!plugin.getConfig().drawNameInHealthBar()) {
+    if (!config.themeDefaultDrawNameInHealthBar()) {
       height += TITLE_HEIGHT;
     }
     if (shouldDrawPrayerBar(nameplate.getActor())) {
