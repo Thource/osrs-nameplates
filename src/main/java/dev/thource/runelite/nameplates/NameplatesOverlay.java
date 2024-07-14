@@ -5,15 +5,19 @@ import dev.thource.runelite.nameplates.themes.Themes;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.IndexedObjectSet;
+import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.WorldView;
@@ -60,6 +64,7 @@ public class NameplatesOverlay extends Overlay {
 
     LocalPoint cameraPoint = new LocalPoint(client.getCameraX(), client.getCameraY());
 
+    Actor finalHoveredActor = getHoveredActor();
     getLocalPointActorMap().entrySet().stream()
         .sorted(
             Comparator.comparingInt(
@@ -88,7 +93,8 @@ public class NameplatesOverlay extends Overlay {
                             nameplate,
                             new Point(point.getX(), point.getY() - 16 - stackHeight),
                             actor.getLocalLocation().distanceTo(cameraPoint),
-                            actor)
+                            actor,
+                            finalHoveredActor == actor)
                         + 4;
                 nameplate.getHpAnimationData().progressBy(deltaMs);
               }
@@ -99,14 +105,75 @@ public class NameplatesOverlay extends Overlay {
     return null;
   }
 
+  private Actor getHoveredActor() {
+    MenuEntry[] menuEntries = client.getMenuEntries();
+    if (menuEntries.length == 0) {
+      return null;
+    }
+
+    HoverIndicatorMode hoverIndicatorMode = plugin.getConfig().hoverIndicatorMode();
+    if ((hoverIndicatorMode == HoverIndicatorMode.RIGHT_CLICK
+            || hoverIndicatorMode == HoverIndicatorMode.BUSY_RIGHT_CLICK)
+        && !client.isMenuOpen()) {
+      return null;
+    }
+
+    if (hoverIndicatorMode == HoverIndicatorMode.BUSY
+        || hoverIndicatorMode == HoverIndicatorMode.BUSY_RIGHT_CLICK) {
+      long uniqueActors =
+          Arrays.stream(menuEntries)
+              .map(MenuEntry::getActor)
+              .filter(Objects::nonNull)
+              .distinct()
+              .count();
+
+      if (uniqueActors <= 1) {
+        return null;
+      }
+    }
+
+    MenuEntry entry =
+        client.isMenuOpen()
+            ? getHoveredMenuEntry(menuEntries)
+            : menuEntries[menuEntries.length - 1];
+    MenuAction menuAction = entry.getType();
+    switch (menuAction) {
+      case WIDGET_TARGET_ON_NPC:
+      case NPC_FIRST_OPTION:
+      case NPC_SECOND_OPTION:
+      case NPC_THIRD_OPTION:
+      case NPC_FOURTH_OPTION:
+      case NPC_FIFTH_OPTION:
+      case EXAMINE_NPC:
+      case WIDGET_TARGET_ON_PLAYER:
+      case PLAYER_FIRST_OPTION:
+      case PLAYER_SECOND_OPTION:
+      case PLAYER_THIRD_OPTION:
+      case PLAYER_FOURTH_OPTION:
+      case PLAYER_FIFTH_OPTION:
+      case PLAYER_SIXTH_OPTION:
+      case PLAYER_SEVENTH_OPTION:
+      case PLAYER_EIGHTH_OPTION:
+      case RUNELITE_PLAYER:
+        return entry.getActor();
+    }
+
+    return null;
+  }
+
   private int renderNameplate(
-      Graphics2D graphics, Nameplate nameplate, Point point, int distance, Actor actor) {
+      Graphics2D graphics,
+      Nameplate nameplate,
+      Point point,
+      int distance,
+      Actor actor,
+      boolean isHovered) {
     //        float scale = Math.min(Math.max(8f / (distance / 300f), 0.5f), 1);
     //        scale = Math.max(scale * ((float) Math.pow(client.get3dZoom(), 0.6f) / 50f), 1f);
     float scale = 1;
 
     BaseTheme theme = getTheme(actor);
-    theme.drawNameplate(graphics, nameplate, point, scale);
+    theme.drawNameplate(graphics, nameplate, point, scale, isHovered);
     return theme.getHeight(graphics, scale, nameplate);
   }
 
@@ -134,5 +201,29 @@ public class NameplatesOverlay extends Overlay {
     //    }
 
     return true;
+  }
+
+  private MenuEntry getHoveredMenuEntry(final MenuEntry[] menuEntries) {
+    final int menuX = client.getMenuX();
+    final int menuY = client.getMenuY();
+    final int menuWidth = client.getMenuWidth();
+    final Point mousePosition = client.getMouseCanvasPosition();
+
+    int dy = mousePosition.getY() - menuY;
+    dy -= 19; // Height of Choose Option
+    if (dy < 0) {
+      return menuEntries[menuEntries.length - 1];
+    }
+
+    int idx = dy / 15; // Height of each menu option
+    idx = menuEntries.length - 1 - idx;
+
+    if (mousePosition.getX() > menuX
+        && mousePosition.getX() < menuX + menuWidth
+        && idx >= 0
+        && idx < menuEntries.length) {
+      return menuEntries[idx];
+    }
+    return menuEntries[menuEntries.length - 1];
   }
 }

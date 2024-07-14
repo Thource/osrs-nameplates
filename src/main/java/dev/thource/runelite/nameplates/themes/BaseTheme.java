@@ -295,12 +295,26 @@ public abstract class BaseTheme {
   }
 
   protected void drawExternal(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      boolean isHovered) {
     drawOverheads(graphics, width, height, scale, nameplate, anchor);
+
+    if (isHovered) {
+      drawHoverIndicator(graphics, width, height, scale, nameplate, anchor);
+    }
     // drawDebugData(graphics, width, height, scale, nameplate, anchor);
   }
 
-  public void drawNameplate(Graphics2D graphics, Nameplate nameplate, Point anchor, float scale) {
+  protected abstract void drawHoverIndicator(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor);
+
+  public void drawNameplate(
+      Graphics2D graphics, Nameplate nameplate, Point anchor, float scale, boolean isHovered) {
     int width = getWidth(graphics, scale, nameplate);
     int height = getHeight(graphics, scale, nameplate);
 
@@ -308,7 +322,7 @@ public abstract class BaseTheme {
     Graphics2D plateGraphics = plate.createGraphics();
     drawBasePlate(plateGraphics, width, height, scale, nameplate);
     drawOverlay(plateGraphics, width, height, scale, nameplate);
-    drawExternal(graphics, width, height, scale, nameplate, anchor);
+    drawExternal(graphics, width, height, scale, nameplate, anchor, isHovered);
 
     //        Composite oldComposite = graphics.getComposite();
     //        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));

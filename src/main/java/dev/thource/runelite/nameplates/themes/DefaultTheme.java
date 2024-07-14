@@ -2,6 +2,7 @@ package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
 import dev.thource.runelite.nameplates.NameplateHeadIcon;
+import dev.thource.runelite.nameplates.NameplatesPlugin;
 import dev.thource.runelite.nameplates.PoisonStatus;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -20,6 +21,17 @@ import net.runelite.client.ui.FontManager;
 public class DefaultTheme extends BaseTheme {
   private static final int TITLE_HEIGHT = 10;
   private static final int PLATE_HEIGHT = 14;
+
+  private BufferedImage hoverIndicator;
+
+  @Override
+  public void setPlugin(NameplatesPlugin plugin) {
+    super.setPlugin(plugin);
+
+    plugin
+        .getClientThread()
+        .invoke(() -> hoverIndicator = plugin.getSpriteManager().getSprite(772, 0));
+  }
 
   @Override
   protected void drawBasePlate(
@@ -376,6 +388,19 @@ public class DefaultTheme extends BaseTheme {
         overheadSize,
         overheadSize,
         null);
+  }
+
+  @Override
+  protected void drawHoverIndicator(
+      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
+    int leftX = anchor.getX() - width / 2;
+    int centerY = anchor.getY() - height / 2;
+
+    graphics.drawImage(
+        hoverIndicator,
+        null,
+        leftX - hoverIndicator.getWidth() - 4,
+        centerY - hoverIndicator.getHeight() / 2);
   }
 
   @Override

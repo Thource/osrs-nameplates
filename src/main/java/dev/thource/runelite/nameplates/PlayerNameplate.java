@@ -12,6 +12,9 @@ public class PlayerNameplate extends Nameplate {
   public PlayerNameplate(NameplatesPlugin plugin, Player actor) {
     super(plugin, actor);
     this.maxHealth = 99;
+
+    // No need to lookup lvl 126 players, they are always 99 hp
+    this.hiscoreLookupStarted = actor.getCombatLevel() == 126;
   }
 
   public void updateFromActor(NameplatesPlugin plugin) {

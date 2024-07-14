@@ -70,6 +70,18 @@ public interface NameplatesConfig extends Config {
     return true;
   }
 
+  @ConfigItem(
+      keyName = "hoverIndicatorMode",
+      name = "Hover indicator mode",
+      description =
+          "Sets when the hover indicator should show up.<br><br>Always: Always show while hovering"
+              + " any NPC/player<br>Right-click: Only show when hovering entries in the right"
+              + " click menu<br>Busy: Only show when multiple NPC/players are present in the"
+              + " right-click menu<br>Busy right-click: Combines Busy and Right-click mode")
+  default HoverIndicatorMode hoverIndicatorMode() {
+    return HoverIndicatorMode.BUSY_RIGHT_CLICK;
+  }
+
   @ConfigSection(
       name = "Theme settings: Default",
       description = "Settings for the Default theme",
