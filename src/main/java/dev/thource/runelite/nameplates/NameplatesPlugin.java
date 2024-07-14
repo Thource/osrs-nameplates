@@ -46,6 +46,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.NPCManager;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.hiscore.HiscoreClient;
 import net.runelite.client.hiscore.HiscoreEndpoint;
 import net.runelite.client.plugins.Plugin;
@@ -73,6 +74,7 @@ public class NameplatesPlugin extends Plugin {
   @Inject private NameplatesOverlay nameplatesOverlay;
   @Inject private ItemStatChanges statChanges;
   @Getter @Inject private NPCManager npcManager;
+  @Getter @Inject private SpriteManager spriteManager;
   @Getter @Inject private HiscoreClient hiscoreClient;
 
   @Getter private final HashMap<Integer, HpCacheEntry> hpCache = new HashMap<>();
@@ -232,6 +234,13 @@ public class NameplatesPlugin extends Plugin {
 
   @Override
   protected void startUp() {
+    clientThread.invoke(
+        () -> {
+          for (NameplateHeadIcon icon : NameplateHeadIcon.values()) {
+            icon.loadImage(spriteManager);
+          }
+        });
+
     for (Themes theme : Themes.values()) {
       theme.getTheme().setPlugin(this);
     }

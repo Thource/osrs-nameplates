@@ -4,28 +4,32 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.runelite.api.HeadIcon;
-import net.runelite.client.util.ImageUtil;
+import net.runelite.api.SpriteID;
+import net.runelite.client.game.SpriteManager;
 
+@RequiredArgsConstructor
 public enum NameplateHeadIcon {
-  MELEE(HeadIcon.MELEE, "protect_from_melee"),
-  RANGED(HeadIcon.RANGED, "protect_from_ranged"),
-  MAGIC(HeadIcon.MAGIC, "protect_from_magic"),
-  RETRIBUTION(HeadIcon.RETRIBUTION, "retribution"),
-  SMITE(HeadIcon.SMITE, "smite"),
-  REDEMPTION(HeadIcon.REDEMPTION, "redemption"),
-  RANGE_MAGE(HeadIcon.RANGE_MAGE, "smite"),
-  RANGE_MELEE(HeadIcon.RANGE_MELEE, "smite"),
-  MAGE_MELEE(HeadIcon.MAGE_MELEE, "smite"),
-  RANGE_MAGE_MELEE(HeadIcon.RANGE_MAGE_MELEE, "smite"),
-  WRATH(HeadIcon.WRATH, "smite"),
-  SOUL_SPLIT(HeadIcon.SOUL_SPLIT, "smite"),
-  DEFLECT_MELEE(HeadIcon.DEFLECT_MELEE, "smite"),
-  DEFLECT_RANGE(HeadIcon.DEFLECT_RANGE, "smite"),
-  DEFLECT_MAGE(HeadIcon.DEFLECT_MAGE, "smite");
+  MELEE(HeadIcon.MELEE, 0),
+  RANGED(HeadIcon.RANGED, 1),
+  MAGIC(HeadIcon.MAGIC, 2),
+  RETRIBUTION(HeadIcon.RETRIBUTION, 3),
+  SMITE(HeadIcon.SMITE, 4),
+  REDEMPTION(HeadIcon.REDEMPTION, 5),
+  RANGE_MAGE(HeadIcon.RANGE_MAGE, 6),
+  RANGE_MELEE(HeadIcon.RANGE_MELEE, 7),
+  MAGE_MELEE(HeadIcon.MAGE_MELEE, 8),
+  RANGE_MAGE_MELEE(HeadIcon.RANGE_MAGE_MELEE, 9),
+  WRATH(HeadIcon.WRATH, 10),
+  SOUL_SPLIT(HeadIcon.SOUL_SPLIT, 11),
+  DEFLECT_MELEE(HeadIcon.DEFLECT_MELEE, 12),
+  DEFLECT_RANGE(HeadIcon.DEFLECT_RANGE, 13),
+  DEFLECT_MAGE(HeadIcon.DEFLECT_MAGE, 14);
 
   private final HeadIcon headIcon;
-  @Getter private final BufferedImage image;
+  private final int overheadFileId;
+  @Getter private BufferedImage image;
 
   private static final Map<HeadIcon, NameplateHeadIcon> map;
 
@@ -36,12 +40,15 @@ public enum NameplateHeadIcon {
     }
   }
 
-  NameplateHeadIcon(HeadIcon headIcon, String imageName) {
-    this.headIcon = headIcon;
-    image = ImageUtil.loadImageResource(NameplatesPlugin.class, "overheads/" + imageName + ".png");
-  }
-
   public static NameplateHeadIcon get(HeadIcon headIcon) {
     return map.get(headIcon);
+  }
+
+  public void loadImage(SpriteManager spriteManager) {
+    if (image != null) {
+      return;
+    }
+
+    image = spriteManager.getSprite(SpriteID.OVERHEAD_PROTECT_FROM_MELEE, overheadFileId);
   }
 }
