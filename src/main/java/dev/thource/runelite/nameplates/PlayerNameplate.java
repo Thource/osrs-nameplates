@@ -11,6 +11,7 @@ public class PlayerNameplate extends Nameplate {
 
   public PlayerNameplate(NameplatesPlugin plugin, Player actor) {
     super(plugin, actor);
+    this.maxHealth = 99;
   }
 
   public void updateFromActor(NameplatesPlugin plugin) {
@@ -21,9 +22,7 @@ public class PlayerNameplate extends Nameplate {
       return;
     }
 
-    if (!hiscoreLookupStarted) {
-      this.maxHealth = 99;
-
+    if (!hiscoreLookupStarted && plugin.getConfig().lookupPlayerHp()) {
       hiscoreLookupStarted = true;
       final Nameplate nameplate = this;
       plugin

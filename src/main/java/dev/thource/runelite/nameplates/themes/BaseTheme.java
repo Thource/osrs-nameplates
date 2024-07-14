@@ -12,6 +12,7 @@ import net.runelite.api.Actor;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
 import net.runelite.client.plugins.itemstats.StatChange;
+import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
 public abstract class BaseTheme {
@@ -31,6 +32,26 @@ public abstract class BaseTheme {
 
   protected abstract void drawCombatLevel(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate);
+
+  protected String getHealthString(Nameplate nameplate) {
+    String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
+    boolean forcePercentage =
+        !config.lookupPlayerHp() && nameplate.getActor() != plugin.getClient().getLocalPlayer();
+
+    HitpointsDisplayStyle displayStyle = config.hitpointsDisplayStyle();
+    if (displayStyle != HitpointsDisplayStyle.HITPOINTS || forcePercentage) {
+      double percentage =
+          Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
+
+      if (displayStyle == HitpointsDisplayStyle.PERCENTAGE || forcePercentage) {
+        healthString = percentage + "%";
+      } else {
+        healthString += " (" + percentage + "%)";
+      }
+    }
+
+    return healthString;
+  }
 
   protected void drawHealthBar(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {

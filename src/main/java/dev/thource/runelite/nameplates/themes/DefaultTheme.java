@@ -15,7 +15,6 @@ import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.plugins.itemstats.stats.Stats;
-import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 import net.runelite.client.ui.FontManager;
 
 public class DefaultTheme extends BaseTheme {
@@ -126,18 +125,7 @@ public class DefaultTheme extends BaseTheme {
       int borderSize,
       int barTopY,
       int barHeight) {
-    String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
-    HitpointsDisplayStyle displayStyle = config.hitpointsDisplayStyle();
-    if (displayStyle != HitpointsDisplayStyle.HITPOINTS) {
-      double percentage =
-          Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
-
-      if (displayStyle == HitpointsDisplayStyle.PERCENTAGE) {
-        healthString = percentage + "%";
-      } else {
-        healthString += " (" + percentage + "%)";
-      }
-    }
+    String healthString = getHealthString(nameplate);
 
     Rectangle2D healthBounds = fontMetrics.getStringBounds(healthString, graphics);
 

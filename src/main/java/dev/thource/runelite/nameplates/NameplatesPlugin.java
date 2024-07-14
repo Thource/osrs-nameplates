@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -43,6 +44,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.NPCManager;
 import net.runelite.client.hiscore.HiscoreClient;
 import net.runelite.client.hiscore.HiscoreEndpoint;
@@ -455,6 +457,22 @@ public class NameplatesPlugin extends Plugin {
     Actor actor = actorDeath.getActor();
 
     hpCache.remove(getActorId(actor));
+  }
+
+  @Subscribe
+  public void onConfigChanged(ConfigChanged configChanged) {
+    if (!configChanged.getGroup().equals(NameplatesConfig.CONFIG_GROUP)) {
+      return;
+    }
+
+    if (configChanged.getKey().equals("lookupPlayerHp")) {
+      clientThread.invoke(
+          () ->
+              client.getTopLevelWorldView().players().stream()
+                  .map(this::getNameplateForActor)
+                  .filter(Objects::nonNull)
+                  .forEach(nameplate -> nameplate.updateFromActor(this)));
+    }
   }
 
   @Subscribe

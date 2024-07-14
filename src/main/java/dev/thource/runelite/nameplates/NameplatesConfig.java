@@ -62,6 +62,14 @@ public interface NameplatesConfig extends Config {
     return true;
   }
 
+  @ConfigItem(
+      keyName = "lookupPlayerHp",
+      name = "Fetch other players HP",
+      description = "If enabled, fetch other players HP from the hiscores")
+  default boolean lookupPlayerHp() {
+    return true;
+  }
+
   @ConfigSection(
       name = "Theme settings: Default",
       description = "Settings for the Default theme",
