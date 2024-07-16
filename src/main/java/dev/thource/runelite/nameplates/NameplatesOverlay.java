@@ -62,7 +62,8 @@ public class NameplatesOverlay extends Overlay {
   public Dimension render(Graphics2D graphics) {
     long deltaMs = System.currentTimeMillis() - lastRender;
 
-    LocalPoint cameraPoint = new LocalPoint(client.getCameraX(), client.getCameraY());
+    LocalPoint cameraPoint =
+        new LocalPoint(client.getCameraX(), client.getCameraY(), client.getTopLevelWorldView());
 
     Actor finalHoveredActor = getHoveredActor();
     getLocalPointActorMap().entrySet().stream()
@@ -73,8 +74,19 @@ public class NameplatesOverlay extends Overlay {
                 .reversed())
         .forEach(
             (entry) -> {
-              int stackHeight = 0;
               List<Actor> actors = entry.getValue();
+
+              // TODO: set stackHeight initial value back to 0 and remove the addition below when RL
+              // addsupport for overriding overhead and skull sprites
+              // This is just to make the nameplates show up higher than any potential skull or
+              // overhead icons
+              int stackHeight = actors.stream().anyMatch(a -> a instanceof Player) ? 28 : 0;
+              if (actors.stream()
+                  .filter(a -> a instanceof Player)
+                  .anyMatch(a -> ((Player) a).getOverheadIcon() != null)) {
+                stackHeight += 30;
+              }
+
               int firstActorHeight = actors.get(0).getLogicalHeight();
               for (Actor actor : actors) {
                 Point point = actor.getCanvasTextLocation(graphics, " ", firstActorHeight);

@@ -19,6 +19,8 @@ import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.Constants;
 import net.runelite.api.GameState;
+import net.runelite.api.Hitsplat;
+import net.runelite.api.HitsplatID;
 import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
@@ -237,6 +239,9 @@ public class NameplatesPlugin extends Plugin {
     clientThread.invoke(
         () -> {
           for (NameplateHeadIcon icon : NameplateHeadIcon.values()) {
+            icon.loadImage(spriteManager);
+          }
+          for (NameplateSkullIcon icon : NameplateSkullIcon.values()) {
             icon.loadImage(spriteManager);
           }
         });
@@ -486,11 +491,43 @@ public class NameplatesPlugin extends Plugin {
 
   @Subscribe
   public void onHitsplatApplied(HitsplatApplied hitsplatApplied) {
+    Hitsplat hitsplat = hitsplatApplied.getHitsplat();
+    Actor actor = hitsplatApplied.getActor();
     System.out.println(
         "Hitsplat - "
-            + hitsplatApplied.getActor().getName()
+            + actor.getName()
             + ": "
-            + hitsplatApplied.getHitsplat().getAmount());
+            + hitsplat.getAmount()
+            + " ("
+            + hitsplat.getHitsplatType()
+            + ")");
+
+    if (actor instanceof NPC) {
+      checkHitsplatForNoLoot(hitsplat, (NPC) actor);
+    }
+  }
+
+  private void checkHitsplatForNoLoot(Hitsplat hitsplat, NPC npc) {
+    int accountType = client.getVarbitValue(Varbits.ACCOUNT_TYPE);
+    if (accountType == 0) {
+      return;
+    }
+
+    boolean isNoLoot = hitsplat.getHitsplatType() == 1;
+    boolean isGIM = accountType == 4 || accountType == 5 || accountType == 6;
+    if (!isGIM || config.enableNoLootOtherGIMSplats()) {
+      if (hitsplat.getHitsplatType() == HitsplatID.DAMAGE_OTHER
+          || hitsplat.getHitsplatType() == HitsplatID.DAMAGE_OTHER_POISE) {
+        isNoLoot = true;
+      }
+    }
+
+    if (isNoLoot) {
+      Nameplate nameplate = getNameplateForActor(npc);
+      if (nameplate != null) {
+        ((NPCNameplate) nameplate).setNoLoot(true);
+      }
+    }
   }
 
   public double getTickProgress() {

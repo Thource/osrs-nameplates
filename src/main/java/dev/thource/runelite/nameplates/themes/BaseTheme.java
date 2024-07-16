@@ -1,5 +1,6 @@
 package dev.thource.runelite.nameplates.themes;
 
+import dev.thource.runelite.nameplates.NPCNameplate;
 import dev.thource.runelite.nameplates.Nameplate;
 import dev.thource.runelite.nameplates.NameplatesConfig;
 import dev.thource.runelite.nameplates.NameplatesPlugin;
@@ -9,6 +10,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import net.runelite.api.Actor;
+import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
 import net.runelite.client.plugins.itemstats.StatChange;
@@ -278,7 +281,13 @@ public abstract class BaseTheme {
   }
 
   protected abstract void drawOverheads(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor);
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData);
 
   protected void drawDebugData(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
@@ -302,16 +311,56 @@ public abstract class BaseTheme {
       Nameplate nameplate,
       Point anchor,
       boolean isHovered) {
-    drawOverheads(graphics, width, height, scale, nameplate, anchor);
+    ExternalDrawData externalDrawData = new ExternalDrawData();
+
+    // TODO: Remove this conditional when the RL team add NPC.getOverheadIcon()
+    if (nameplate.getActor() instanceof Player) {
+      drawOverheads(graphics, width, height, scale, nameplate, anchor, externalDrawData);
+    }
+
+    // TODO: Remove this conditional when the RL team add support for non-local
+    // Player.getSkullIcon()
+    if (nameplate.getActor() == plugin.getClient().getLocalPlayer()) {
+      drawSkullIcon(graphics, width, height, scale, nameplate, anchor, externalDrawData);
+    }
+
+    if (nameplate.getActor() instanceof NPC && ((NPCNameplate) nameplate).isNoLoot()) {
+      drawNoLootIcon(graphics, width, height, scale, nameplate, anchor, externalDrawData);
+    }
 
     if (isHovered) {
-      drawHoverIndicator(graphics, width, height, scale, nameplate, anchor);
+      drawHoverIndicator(graphics, width, height, scale, nameplate, anchor, externalDrawData);
     }
+
     // drawDebugData(graphics, width, height, scale, nameplate, anchor);
   }
 
+  protected abstract void drawNoLootIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData);
+
+  protected abstract void drawSkullIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData);
+
   protected abstract void drawHoverIndicator(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor);
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData);
 
   public void drawNameplate(
       Graphics2D graphics, Nameplate nameplate, Point anchor, float scale, boolean isHovered) {
@@ -322,6 +371,7 @@ public abstract class BaseTheme {
     Graphics2D plateGraphics = plate.createGraphics();
     drawBasePlate(plateGraphics, width, height, scale, nameplate);
     drawOverlay(plateGraphics, width, height, scale, nameplate);
+    plateGraphics.dispose();
     drawExternal(graphics, width, height, scale, nameplate, anchor, isHovered);
 
     //        Composite oldComposite = graphics.getComposite();

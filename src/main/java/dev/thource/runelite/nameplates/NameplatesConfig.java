@@ -71,6 +71,17 @@ public interface NameplatesConfig extends Config {
   }
 
   @ConfigItem(
+      keyName = "enableNoLootOtherGIMSplats",
+      name = "[GIM] Enable no-loot indicator for other hitsplats",
+      description =
+          "If enabled, NPCs will be tagged as no-loot if a tinted damage hitsplat appears<br>on"
+              + " them.<br><br>Disable this if you frequently PVM with your group members"
+              + " and the false<br>positive no-loot indicators are bothering you.")
+  default boolean enableNoLootOtherGIMSplats() {
+    return true;
+  }
+
+  @ConfigItem(
       keyName = "hoverIndicatorMode",
       name = "Hover indicator mode",
       description =
@@ -315,6 +326,16 @@ public interface NameplatesConfig extends Config {
   default Color themeDefaultColorPrayerFlickIndicator() {
     return Color.BLUE;
   }
+
+  // TODO list
+  // =========
+  // add options for when nameplates should show up
+  // add another theme
+
+  // RL dependency list
+  // NPC.getOverheadIcon() - required so that overheads can be drawn on NPC nameplates
+  // Player.getSkullIcon() for non-local players (including blue Forinthry Surge buff skull)
+  // Overriding of overhead icons and skull icons
 
   // draw nameplates for players
   // draw nameplates for npcs

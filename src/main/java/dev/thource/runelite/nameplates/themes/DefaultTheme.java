@@ -2,6 +2,7 @@ package dev.thource.runelite.nameplates.themes;
 
 import dev.thource.runelite.nameplates.Nameplate;
 import dev.thource.runelite.nameplates.NameplateHeadIcon;
+import dev.thource.runelite.nameplates.NameplateSkullIcon;
 import dev.thource.runelite.nameplates.NameplatesPlugin;
 import dev.thource.runelite.nameplates.PoisonStatus;
 import java.awt.Color;
@@ -14,6 +15,8 @@ import java.time.Duration;
 import java.time.Instant;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.api.SpriteID;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.itemstats.StatChange;
 import net.runelite.client.plugins.itemstats.stats.Stats;
 import net.runelite.client.ui.FontManager;
@@ -23,6 +26,7 @@ public class DefaultTheme extends BaseTheme {
   private static final int PLATE_HEIGHT = 14;
 
   private BufferedImage hoverIndicator;
+  private BufferedImage noLootIndicator;
 
   @Override
   public void setPlugin(NameplatesPlugin plugin) {
@@ -30,7 +34,30 @@ public class DefaultTheme extends BaseTheme {
 
     plugin
         .getClientThread()
-        .invoke(() -> hoverIndicator = plugin.getSpriteManager().getSprite(772, 0));
+        .invoke(
+            () -> {
+              SpriteManager spriteManager = plugin.getSpriteManager();
+              hoverIndicator = spriteManager.getSprite(772, 0);
+              BufferedImage noImage =
+                  spriteManager.getSprite(SpriteID.OPTIONS_DISABLED_OPTION_OVERLAY, 0);
+              int inventoryImagePadding = 2;
+              BufferedImage inventoryImage = spriteManager.getSprite(SpriteID.RS2_TAB_INVENTORY, 0);
+              noLootIndicator =
+                  new BufferedImage(
+                      noImage.getWidth(), noImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+              Graphics2D graphics = noLootIndicator.createGraphics();
+              graphics.drawImage(
+                  inventoryImage,
+                  (noImage.getWidth() - (inventoryImage.getWidth() - inventoryImagePadding * 2))
+                      / 2,
+                  (noImage.getHeight() - (inventoryImage.getHeight() - inventoryImagePadding * 2))
+                      / 2,
+                  inventoryImage.getWidth() - inventoryImagePadding * 2,
+                  inventoryImage.getHeight() - inventoryImagePadding * 2,
+                  null);
+              graphics.drawImage(noImage, 0, 0, null);
+              graphics.dispose();
+            });
   }
 
   @Override
@@ -359,31 +386,36 @@ public class DefaultTheme extends BaseTheme {
 
   @Override
   protected void drawOverheads(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
-    if (!(nameplate.getActor() instanceof Player)) {
-      return;
-    }
-
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {
     NameplateHeadIcon overheadIcon =
         NameplateHeadIcon.get(((Player) nameplate.getActor()).getOverheadIcon());
     if (overheadIcon == null) {
       return;
     }
 
-    int rightX = anchor.getX() + width / 2;
+    int rightX = anchor.getX() + width / 2 + externalDrawData.getRightOffset();
+    int rightPadding = (int) (6 * scale);
     int topY = anchor.getY() - height;
     int overheadSize = height;
 
-    // reduce overhead size to ensure consistency
     if (shouldDrawPrayerBar(nameplate.getActor())) {
+      // reduce overhead size to ensure consistency
       overheadSize -= getPlateHeight(graphics, scale, nameplate);
     }
+
+    externalDrawData.addRightOffset(overheadSize + rightPadding);
 
     BufferedImage overheadImage = overheadIcon.getImage();
     graphics.drawImage(
         overheadImage.getScaledInstance(
             overheadSize, overheadSize, Image.SCALE_SMOOTH), // TODO: optimise this
-        rightX + (int) (6 * scale),
+        rightX + rightPadding,
         topY,
         overheadSize,
         overheadSize,
@@ -391,16 +423,79 @@ public class DefaultTheme extends BaseTheme {
   }
 
   @Override
+  protected void drawNoLootIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {
+    int padding = (int) (6 * scale);
+    int leftX = anchor.getX() - width / 2 - externalDrawData.getLeftOffset();
+    int topY = anchor.getY() - height;
+
+    externalDrawData.addLeftOffset(height + padding);
+
+    Image image =
+        noLootIndicator.getScaledInstance(
+            height, height, Image.SCALE_SMOOTH); // TODO: optimise this
+    graphics.drawImage(image, leftX - height - padding, topY, height, height, null);
+  }
+
+  @Override
   protected void drawHoverIndicator(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {
-    int leftX = anchor.getX() - width / 2;
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {
+    int padding = (int) (6 * scale);
+    int leftX = anchor.getX() - width / 2 - externalDrawData.getLeftOffset();
     int centerY = anchor.getY() - height / 2;
+    externalDrawData.addLeftOffset(hoverIndicator.getWidth() + padding);
 
     graphics.drawImage(
         hoverIndicator,
         null,
-        leftX - hoverIndicator.getWidth() - 4,
+        leftX - hoverIndicator.getWidth() - padding,
         centerY - hoverIndicator.getHeight() / 2);
+  }
+
+  @Override
+  protected void drawSkullIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {
+    NameplateSkullIcon skullIcon =
+        NameplateSkullIcon.get(((Player) nameplate.getActor()).getSkullIcon());
+    if (skullIcon == null) {
+      return;
+    }
+
+    int padding = (int) (6 * scale);
+    int leftX = anchor.getX() - width / 2 - externalDrawData.getLeftOffset();
+    int topY = anchor.getY() - height;
+    int size = height;
+
+    if (shouldDrawPrayerBar(nameplate.getActor())) {
+      // reduce overhead size to ensure consistency
+      size -= getPlateHeight(graphics, scale, nameplate);
+    }
+
+    externalDrawData.addLeftOffset(size + padding);
+
+    Image skullImage =
+        skullIcon
+            .getImage()
+            .getScaledInstance(size, size, Image.SCALE_SMOOTH); // TODO: optimise this
+    graphics.drawImage(skullImage, leftX - size - padding, topY, size, size, null);
   }
 
   @Override

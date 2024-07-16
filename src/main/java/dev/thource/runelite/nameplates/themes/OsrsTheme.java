@@ -165,11 +165,43 @@ public class OsrsTheme extends BaseTheme {
 
   @Override
   protected void drawOverheads(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {}
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {}
+
+  @Override
+  protected void drawNoLootIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {}
+
+  @Override
+  protected void drawSkullIcon(
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {}
 
   @Override
   protected void drawHoverIndicator(
-      Graphics2D graphics, int width, int height, float scale, Nameplate nameplate, Point anchor) {}
+      Graphics2D graphics,
+      int width,
+      int height,
+      float scale,
+      Nameplate nameplate,
+      Point anchor,
+      ExternalDrawData externalDrawData) {}
 
   private SpritePixels getHealthbarBackSprite(int healthScale) {
     int spriteId;
