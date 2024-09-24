@@ -318,9 +318,7 @@ public abstract class BaseTheme {
       drawOverheads(graphics, width, height, scale, nameplate, anchor, externalDrawData);
     }
 
-    // TODO: Remove this conditional when the RL team add support for non-local
-    // Player.getSkullIcon()
-    if (nameplate.getActor() == plugin.getClient().getLocalPlayer()) {
+    if (nameplate.getActor() instanceof Player) {
       drawSkullIcon(graphics, width, height, scale, nameplate, anchor, externalDrawData);
     }
 
