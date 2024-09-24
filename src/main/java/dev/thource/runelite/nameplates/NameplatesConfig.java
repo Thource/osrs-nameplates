@@ -15,6 +15,57 @@ public interface NameplatesConfig extends Config {
   String CONFIG_GROUP = "nameplates";
 
   @ConfigItem(
+      keyName = "npcNameplateDisplayMode",
+      name = "NPC nameplate display behaviour",
+      description = "Defines when NPC nameplates will be visible.")
+  default NameplateDisplayMode npcNameplateDisplayMode() {
+    return NameplateDisplayMode.IN_COMBAT;
+  }
+
+  @ConfigItem(
+      keyName = "playerNameplateDisplayMode",
+      name = "Player nameplate display behaviour",
+      description = "Defines when player nameplates will be visible.")
+  default NameplateDisplayMode playerNameplateDisplayMode() {
+    return NameplateDisplayMode.IN_COMBAT;
+  }
+
+  @ConfigItem(
+      keyName = "ownNameplateDisplayMode",
+      name = "Own nameplate display behaviour",
+      description = "Defines when local player nameplate will be visible.")
+  default NameplateDisplayMode ownNameplateDisplayMode() {
+    return NameplateDisplayMode.ALWAYS;
+  }
+
+  @ConfigItem(
+      keyName = "alwaysDrawNPCNames",
+      name = "Always draw NPC names",
+      description =
+          "Still draw NPC names when nameplate display behaviour is set to hide the nameplates.")
+  default boolean alwaysDrawNPCNames() {
+    return true;
+  }
+
+  @ConfigItem(
+      keyName = "alwaysDrawPlayerNames",
+      name = "Always draw player names",
+      description =
+          "Still draw player names when nameplate display behaviour is set to hide the nameplates.")
+  default boolean alwaysDrawPlayerNames() {
+    return true;
+  }
+
+  @ConfigItem(
+      keyName = "alwaysDrawOwnName",
+      name = "Always draw own name",
+      description =
+          "Still draw own name when nameplate display behaviour is set to hide the nameplate.")
+  default boolean alwaysDrawOwnName() {
+    return false;
+  }
+
+  @ConfigItem(
       keyName = "hitpointsDisplayStyle",
       name = "Hitpoints display style",
       description = "Show hitpoints as a value, percentage, or both")

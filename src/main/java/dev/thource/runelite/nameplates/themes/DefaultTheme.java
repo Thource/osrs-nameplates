@@ -63,7 +63,7 @@ public class DefaultTheme extends BaseTheme {
   @Override
   protected void drawBasePlate(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (nameplate.getMaxHealth() <= 0) {
+    if (!shouldDrawBars(nameplate)) {
       return;
     }
 
@@ -82,7 +82,7 @@ public class DefaultTheme extends BaseTheme {
   @Override
   protected void drawName(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (config.themeDefaultDrawNameInHealthBar() && nameplate.getMaxHealth() > 0) {
+    if (config.themeDefaultDrawNameInHealthBar() && shouldDrawBars(nameplate)) {
       return;
     }
 
@@ -92,13 +92,14 @@ public class DefaultTheme extends BaseTheme {
     int textLineY =
         (int) (fontMetrics.getStringBounds(nameplate.getName(), graphics).getHeight() * 0.9f);
     graphics.setColor(Color.WHITE);
-    graphics.drawString(nameplate.getName(), nameplate.getMaxHealth() <= 0 ? 0 : 2, textLineY);
+    graphics.drawString(nameplate.getName(), !shouldDrawBars(nameplate) ? 0 : 2, textLineY);
   }
 
   @Override
   protected void drawCombatLevel(
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
-    if (config.themeDefaultDrawNameInHealthBar()) {
+    boolean shouldDrawBars = shouldDrawBars(nameplate);
+    if (config.themeDefaultDrawNameInHealthBar() && shouldDrawBars) {
       // TODO: figure out where to draw combat level
       return;
     }
@@ -500,7 +501,7 @@ public class DefaultTheme extends BaseTheme {
 
   @Override
   public int getHeight(Graphics2D graphics, float scale, Nameplate nameplate) {
-    if (nameplate.getMaxHealth() <= 0) {
+    if (!shouldDrawBars(nameplate)) {
       graphics.setFont(
           FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
@@ -520,12 +521,23 @@ public class DefaultTheme extends BaseTheme {
 
   @Override
   protected int getWidth(Graphics2D graphics, float scale, Nameplate nameplate) {
-    if (nameplate.getMaxHealth() <= 0) {
+    if (!shouldDrawBars(nameplate)) {
       graphics.setFont(
           FontManager.getRunescapeSmallFont().deriveFont((float) Math.ceil(16 * scale)));
       FontMetrics fontMetrics = graphics.getFontMetrics();
 
-      return (int) fontMetrics.getStringBounds(nameplate.getName(), graphics).getWidth();
+      int width = (int) fontMetrics.getStringBounds(nameplate.getName(), graphics).getWidth();
+
+      if (nameplate.getCombatLevel() > 0) {
+        width +=
+            (int)
+                (fontMetrics
+                        .getStringBounds(String.valueOf(nameplate.getCombatLevel()), graphics)
+                        .getWidth()
+                    + (6 * scale));
+      }
+
+      return width;
     }
 
     return (int) (120 * scale);

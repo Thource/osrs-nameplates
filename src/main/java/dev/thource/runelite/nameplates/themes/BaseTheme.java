@@ -265,13 +265,13 @@ public abstract class BaseTheme {
       Graphics2D graphics, int width, int height, float scale, Nameplate nameplate) {
     if (shouldDrawName(nameplate.getName())) {
       drawName(graphics, width, height, scale, nameplate);
-    }
 
-    if (nameplate.getMaxHealth() > 0) {
       if (nameplate.getCombatLevel() > 0) {
         drawCombatLevel(graphics, width, height, scale, nameplate);
       }
+    }
 
+    if (shouldDrawBars(nameplate)) {
       drawHealthBar(graphics, width, height, scale, nameplate);
 
       if (shouldDrawPrayerBar(nameplate.getActor())) {
@@ -414,6 +414,14 @@ public abstract class BaseTheme {
 
   protected boolean shouldDrawName(String name) {
     return name != null && !name.isEmpty() && !name.equals("null");
+  }
+
+  protected boolean shouldDrawBars(Nameplate nameplate) {
+    if (nameplate.getMaxHealth() <= 0) {
+      return false;
+    }
+
+    return plugin.shouldDrawFor(nameplate.getActor());
   }
 
   protected boolean shouldDrawPrayerBar(Actor actor) {

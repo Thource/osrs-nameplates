@@ -46,10 +46,13 @@ public class NameplatesOverlay extends Overlay {
     WorldView topLevelWorldView = client.getTopLevelWorldView();
 
     Player localPlayer = client.getLocalPlayer();
-    map.computeIfAbsent(localPlayer.getLocalLocation(), (k) -> new ArrayList<>()).add(localPlayer);
+    if (plugin.getAlwaysDrawName(localPlayer) || plugin.shouldDrawFor(localPlayer)) {
+      map.computeIfAbsent(localPlayer.getLocalLocation(), (k) -> new ArrayList<>())
+          .add(localPlayer);
+    }
     Stream.of(topLevelWorldView.players(), topLevelWorldView.npcs())
         .flatMap(IndexedObjectSet::stream)
-        .filter(this::shouldDrawFor)
+        .filter((actor) -> plugin.getAlwaysDrawName(actor) || plugin.shouldDrawFor(actor))
         .filter((actor) -> actor != localPlayer)
         .forEach(
             (actor) ->
@@ -168,6 +171,8 @@ public class NameplatesOverlay extends Overlay {
       case PLAYER_EIGHTH_OPTION:
       case RUNELITE_PLAYER:
         return entry.getActor();
+      default:
+        break;
     }
 
     return null;
@@ -191,28 +196,6 @@ public class NameplatesOverlay extends Overlay {
 
   private BaseTheme getTheme(Actor actor) {
     return Themes.DEFAULT.getTheme();
-  }
-
-  public boolean shouldDrawFor(Actor actor) {
-    //    if (npc.isDead()) {
-    //      return false;
-    //    }
-
-    // Hovered NPC
-
-    // NPCs targetted in the last x seconds
-
-    //    // Targetted NPC
-    //    if (client.getLocalPlayer().getInteracting() == npc) {
-    //      return true;
-    //    }
-
-    //    // NPCs targetting you
-    //    if (npc.getInteracting() == client.getLocalPlayer()) {
-    //      return true;
-    //    }
-
-    return true;
   }
 
   private MenuEntry getHoveredMenuEntry(final MenuEntry[] menuEntries) {

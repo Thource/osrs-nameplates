@@ -606,6 +606,34 @@ public class NameplatesPlugin extends Plugin {
     return null;
   }
 
+  public NameplateDisplayMode getDisplayMode(Actor actor) {
+    if (actor instanceof Player) {
+      if (actor == client.getLocalPlayer()) {
+        return config.ownNameplateDisplayMode();
+      }
+
+      return config.playerNameplateDisplayMode();
+    }
+
+    return config.npcNameplateDisplayMode();
+  }
+
+  public boolean getAlwaysDrawName(Actor actor) {
+    if (actor instanceof Player) {
+      if (actor == client.getLocalPlayer()) {
+        return config.alwaysDrawOwnName();
+      }
+
+      return config.alwaysDrawPlayerNames();
+    }
+
+    return config.alwaysDrawNPCNames();
+  }
+
+  public boolean shouldDrawFor(Actor actor) {
+    return getDisplayMode(actor).shouldDraw(client, getNameplateForActor(actor));
+  }
+
   @Provides
   NameplatesConfig provideConfig(ConfigManager configManager) {
     return configManager.getConfig(NameplatesConfig.class);
