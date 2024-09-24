@@ -38,7 +38,8 @@ public abstract class BaseTheme {
 
   protected String getHealthString(Nameplate nameplate) {
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
-    if (nameplate.getPercentageHealthOverride() > 0) {
+    if (nameplate instanceof NPCNameplate
+        && ((NPCNameplate) nameplate).getPercentageHealthOverride() > 0) {
       healthString += "~";
     }
 
@@ -46,7 +47,8 @@ public abstract class BaseTheme {
         (nameplate.getActor() instanceof Player
                 && !config.lookupPlayerHp()
                 && nameplate.getActor() != plugin.getClient().getLocalPlayer())
-            || nameplate.isPercentageHealth();
+            || (nameplate instanceof NPCNameplate
+                && ((NPCNameplate) nameplate).isPercentageHealth());
 
     HitpointsDisplayStyle displayStyle = config.hitpointsDisplayStyle();
     if (forcePercentage || displayStyle != HitpointsDisplayStyle.HITPOINTS) {

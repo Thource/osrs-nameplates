@@ -10,6 +10,10 @@ import net.runelite.api.ParamID;
 @Getter
 public class NPCNameplate extends Nameplate {
   @Setter private boolean noLoot;
+  private boolean percentageHealth;
+  private int percentageHealthOverride;
+  private float firstPercentageHealth = -1f;
+  @Setter private int damageTaken;
 
   public NPCNameplate(NameplatesPlugin plugin, NPC actor) {
     super(plugin, actor);
@@ -36,5 +40,29 @@ public class NPCNameplate extends Nameplate {
 
     this.percentageHealth = maxHealth <= 0 && percentageHealthOverride <= 0;
     this.maxHealth = this.percentageHealth ? 100 : maxHealth;
+  }
+
+  public void recalculatePercentageHealth(NameplatesPlugin plugin) {
+    if (firstPercentageHealth == -1f) {
+      firstPercentageHealth = (float) currentHealth / maxHealth;
+    }
+
+    float currentPercentage = plugin.getCurrentHealth(actor, 1000) / 1000f;
+    float percentageDifference = firstPercentageHealth - currentPercentage;
+    int estimatedMaxHealth = Math.round(damageTaken / percentageDifference);
+
+    if (this.percentageHealth) {
+      this.currentHealth = Math.round(estimatedMaxHealth * firstPercentageHealth);
+    }
+    this.percentageHealth = false;
+    this.percentageHealthOverride = estimatedMaxHealth;
+  }
+
+  public int getMaxHealth() {
+    if (percentageHealthOverride > 0) {
+      return percentageHealthOverride;
+    }
+
+    return maxHealth;
   }
 }

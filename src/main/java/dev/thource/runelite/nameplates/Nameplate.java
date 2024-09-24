@@ -17,10 +17,6 @@ public abstract class Nameplate {
   @Setter protected int lastUpdate;
   @Setter protected int lastHitsplat = -100;
   @Setter protected int lastLocalHitsplat = -100;
-  protected boolean percentageHealth;
-  protected int percentageHealthOverride;
-  // Only used when percentageHealth == true
-  @Setter protected int damageTakenThisTick;
   protected final AnimationData hpAnimationData = new AnimationData();
 
   public Nameplate(NameplatesPlugin plugin, Actor actor) {
@@ -45,24 +41,5 @@ public abstract class Nameplate {
 
   public boolean isInLocalCombat(Client client) {
     return client.getTickCount() - lastLocalHitsplat <= 10;
-  }
-
-  public void recalculatePercentageHealth(NameplatesPlugin plugin) {
-    float lastPercentage = (float) currentHealth / maxHealth;
-    float newPercentage = plugin.getCurrentHealth(actor, 1000) / 1000f;
-    float percentageDifference = lastPercentage - newPercentage;
-    int estimatedMaxHealth = Math.round(damageTakenThisTick / percentageDifference);
-
-    this.percentageHealth = false;
-    this.percentageHealthOverride = estimatedMaxHealth;
-    this.currentHealth = Math.round(estimatedMaxHealth * lastPercentage);
-  }
-
-  public int getMaxHealth() {
-    if (percentageHealthOverride > 0) {
-      return percentageHealthOverride;
-    }
-
-    return maxHealth;
   }
 }

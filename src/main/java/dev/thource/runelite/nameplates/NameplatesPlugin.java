@@ -332,9 +332,13 @@ public class NameplatesPlugin extends Plugin {
     Integer maxHealth = 10;
     Nameplate nameplate = getNameplateForActor(actor);
     if (nameplate != null) {
-      if (nameplate.isPercentageHealth() && nameplate.getDamageTakenThisTick() > 0) {
-        nameplate.recalculatePercentageHealth(this);
-        getHpCacheEntryForActor(actor).setHp(nameplate.getMaxHealth());
+      if (nameplate instanceof NPCNameplate) {
+        if ((((NPCNameplate) nameplate).isPercentageHealth()
+                || ((NPCNameplate) nameplate).getPercentageHealthOverride() > 0)
+            && ((NPCNameplate) nameplate).getDamageTaken() > 0) {
+          ((NPCNameplate) nameplate).recalculatePercentageHealth(this);
+          getHpCacheEntryForActor(actor).setHp(nameplate.getMaxHealth());
+        }
       }
 
       maxHealth = nameplate.getMaxHealth();
@@ -500,14 +504,6 @@ public class NameplatesPlugin extends Plugin {
   public void onHitsplatApplied(HitsplatApplied hitsplatApplied) {
     Hitsplat hitsplat = hitsplatApplied.getHitsplat();
     Actor actor = hitsplatApplied.getActor();
-//    System.out.println(
-//        "Hitsplat - "
-//            + actor.getName()
-//            + ": "
-//            + hitsplat.getAmount()
-//            + " ("
-//            + hitsplat.getHitsplatType()
-//            + ")");
 
     Nameplate nameplate = getNameplateForActor(actor);
     if (nameplate != null) {
@@ -519,10 +515,12 @@ public class NameplatesPlugin extends Plugin {
 
       if (actor instanceof NPC) {
         checkHitsplatForNoLoot(hitsplat, (NPC) actor);
-      }
 
-      if (nameplate.isPercentageHealth()) {
-        nameplate.setDamageTakenThisTick(nameplate.getDamageTakenThisTick() + hitsplat.getAmount());
+        if (((NPCNameplate) nameplate).isPercentageHealth()
+            || ((NPCNameplate) nameplate).getPercentageHealthOverride() > 0) {
+          ((NPCNameplate) nameplate)
+              .setDamageTaken(((NPCNameplate) nameplate).getDamageTaken() + hitsplat.getAmount());
+        }
       }
     }
   }
