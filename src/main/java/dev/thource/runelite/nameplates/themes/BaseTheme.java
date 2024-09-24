@@ -38,15 +38,22 @@ public abstract class BaseTheme {
 
   protected String getHealthString(Nameplate nameplate) {
     String healthString = nameplate.getCurrentHealth() + " / " + nameplate.getMaxHealth();
+    if (nameplate.getPercentageHealthOverride() > 0) {
+      healthString += "~";
+    }
+
     boolean forcePercentage =
-        !config.lookupPlayerHp() && nameplate.getActor() != plugin.getClient().getLocalPlayer();
+        (nameplate.getActor() instanceof Player
+                && !config.lookupPlayerHp()
+                && nameplate.getActor() != plugin.getClient().getLocalPlayer())
+            || nameplate.isPercentageHealth();
 
     HitpointsDisplayStyle displayStyle = config.hitpointsDisplayStyle();
-    if (displayStyle != HitpointsDisplayStyle.HITPOINTS || forcePercentage) {
+    if (forcePercentage || displayStyle != HitpointsDisplayStyle.HITPOINTS) {
       double percentage =
           Math.ceil((float) nameplate.getCurrentHealth() / nameplate.getMaxHealth() * 1000f) / 10f;
 
-      if (displayStyle == HitpointsDisplayStyle.PERCENTAGE || forcePercentage) {
+      if (forcePercentage || displayStyle == HitpointsDisplayStyle.PERCENTAGE) {
         healthString = percentage + "%";
       } else {
         healthString += " (" + percentage + "%)";
@@ -364,6 +371,9 @@ public abstract class BaseTheme {
       Graphics2D graphics, Nameplate nameplate, Point anchor, float scale, boolean isHovered) {
     int width = getWidth(graphics, scale, nameplate);
     int height = getHeight(graphics, scale, nameplate);
+    if (width <= 0 || height <= 0) {
+      return;
+    }
 
     BufferedImage plate = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D plateGraphics = plate.createGraphics();

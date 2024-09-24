@@ -34,6 +34,7 @@ public class NPCNameplate extends Nameplate {
       }
     }
 
-    this.maxHealth = maxHealth;
+    this.percentageHealth = maxHealth <= 0 && percentageHealthOverride <= 0;
+    this.maxHealth = this.percentageHealth ? 100 : maxHealth;
   }
 }

@@ -12,6 +12,25 @@ import net.runelite.client.plugins.opponentinfo.HitpointsDisplayStyle;
 @ConfigGroup("nameplates")
 public interface NameplatesConfig extends Config {
 
+  // TODO list
+  // =========
+  // add options for when nameplates should show up
+  // add another theme (possibly a minimal one)
+  // add combat level to name only draws
+
+  // RL dependency list
+  // NPC.getOverheadIcon() - required so that overheads can be drawn on NPC nameplates
+  // Player.getSkullIcon() for non-local players (including blue Forinthry Surge buff skull)
+  // Overriding of overhead icons and skull icons
+
+  // draw nameplates for players
+  // draw nameplates for npcs
+  // draw nameplates on hover
+  // draw nameplates for npcs in combat
+  // draw nameplates for npcs targetting you
+  // draw nameplates for npcs that recently targetted you
+  // nameplate draw range (excluding hover)
+
   String CONFIG_GROUP = "nameplates";
 
   @ConfigItem(
@@ -377,22 +396,4 @@ public interface NameplatesConfig extends Config {
   default Color themeDefaultColorPrayerFlickIndicator() {
     return Color.BLUE;
   }
-
-  // TODO list
-  // =========
-  // add options for when nameplates should show up
-  // add another theme
-
-  // RL dependency list
-  // NPC.getOverheadIcon() - required so that overheads can be drawn on NPC nameplates
-  // Player.getSkullIcon() for non-local players (including blue Forinthry Surge buff skull)
-  // Overriding of overhead icons and skull icons
-
-  // draw nameplates for players
-  // draw nameplates for npcs
-  // draw nameplates on hover
-  // draw nameplates for npcs in combat
-  // draw nameplates for npcs targetting you
-  // draw nameplates for npcs that recently targetted you
-  // nameplate draw range (excluding hover)
 }

@@ -266,7 +266,7 @@ public class NameplatesPlugin extends Plugin {
     restoreSprites();
   }
 
-  private int getCurrentHealth(Actor actor, int maxHealth) {
+  public int getCurrentHealth(Actor actor, int maxHealth) {
     if (actor instanceof Player && actor == client.getLocalPlayer()) {
       return client.getBoostedSkillLevel(Skill.HITPOINTS);
     }
@@ -332,6 +332,11 @@ public class NameplatesPlugin extends Plugin {
     Integer maxHealth = 10;
     Nameplate nameplate = getNameplateForActor(actor);
     if (nameplate != null) {
+      if (nameplate.isPercentageHealth() && nameplate.getDamageTakenThisTick() > 0) {
+        nameplate.recalculatePercentageHealth(this);
+        getHpCacheEntryForActor(actor).setHp(nameplate.getMaxHealth());
+      }
+
       maxHealth = nameplate.getMaxHealth();
     } else {
       if (actor instanceof NPC) {
@@ -394,6 +399,8 @@ public class NameplatesPlugin extends Plugin {
       return;
     }
 
+    hpCache.clear();
+    nameplates.clear();
     hiscoreEndpoint = HiscoreEndpoint.fromWorldTypes(client.getWorldType());
   }
 
@@ -493,17 +500,30 @@ public class NameplatesPlugin extends Plugin {
   public void onHitsplatApplied(HitsplatApplied hitsplatApplied) {
     Hitsplat hitsplat = hitsplatApplied.getHitsplat();
     Actor actor = hitsplatApplied.getActor();
-    System.out.println(
-        "Hitsplat - "
-            + actor.getName()
-            + ": "
-            + hitsplat.getAmount()
-            + " ("
-            + hitsplat.getHitsplatType()
-            + ")");
+//    System.out.println(
+//        "Hitsplat - "
+//            + actor.getName()
+//            + ": "
+//            + hitsplat.getAmount()
+//            + " ("
+//            + hitsplat.getHitsplatType()
+//            + ")");
 
-    if (actor instanceof NPC) {
-      checkHitsplatForNoLoot(hitsplat, (NPC) actor);
+    Nameplate nameplate = getNameplateForActor(actor);
+    if (nameplate != null) {
+      nameplate.setLastHitsplat(client.getTickCount());
+
+      if (hitsplat.isMine()) {
+        nameplate.setLastLocalHitsplat(client.getTickCount());
+      }
+
+      if (actor instanceof NPC) {
+        checkHitsplatForNoLoot(hitsplat, (NPC) actor);
+      }
+
+      if (nameplate.isPercentageHealth()) {
+        nameplate.setDamageTakenThisTick(nameplate.getDamageTakenThisTick() + hitsplat.getAmount());
+      }
     }
   }
 
