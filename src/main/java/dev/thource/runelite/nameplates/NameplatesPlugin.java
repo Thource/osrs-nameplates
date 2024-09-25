@@ -366,7 +366,13 @@ public class NameplatesPlugin extends Plugin {
   private void updateNameplate(Actor actor) {
     Nameplate nameplate = getNameplateForActor(actor);
     if (nameplate == null) {
-      return;
+      if (actor instanceof Player) {
+        nameplate = new PlayerNameplate(this, (Player) actor);
+      } else {
+        nameplate = new NPCNameplate(this, (NPC) actor);
+      }
+
+      nameplates.put(getActorId(actor), nameplate);
     }
 
     int hp;
@@ -454,22 +460,8 @@ public class NameplatesPlugin extends Plugin {
   }
 
   @Subscribe
-  public void onNpcSpawned(NpcSpawned npcSpawned) {
-    NPC npc = npcSpawned.getNpc();
-
-    nameplates.put(getActorId(npc), new NPCNameplate(this, npc));
-  }
-
-  @Subscribe
   public void onNpcDespawned(NpcDespawned npcDespawned) {
     nameplates.remove(getActorId(npcDespawned.getNpc()));
-  }
-
-  @Subscribe
-  public void onPlayerSpawned(PlayerSpawned playerSpawned) {
-    Player player = playerSpawned.getPlayer();
-
-    nameplates.put(getActorId(player), new PlayerNameplate(this, player));
   }
 
   @Subscribe
